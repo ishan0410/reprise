@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cua"
+version = "0.1.0"
+description = "Computer-use automation system: LLM-driven discovery compiled into deterministic, replayable capability artifacts, with safety guardrails and human-in-the-loop handoff."
+requires-python = ">=3.12"
+dependencies = [
+  "playwright>=1.50",
+  "pydantic>=2.8",
+  "python-dotenv>=1.0",
+  "google-genai>=1.0",
+  "groq>=0.20",
+  "flask>=3.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "mypy>=1.10", "ruff>=0.5"]
+
+[project.scripts]
+cua-target-app = "cua.target_app.server:main"
+cua-discover = "cua.cli.discover:main"
+cua-replay = "cua.cli.replay:main"
+cua-resume = "cua.cli.resume:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["cua"]
+mypy_path = "src"
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"

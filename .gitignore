@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+.env
+.DS_Store
+*.log
+# Playwright persistent browser state must never be committed (may contain session cookies)
+.playwright-session/
