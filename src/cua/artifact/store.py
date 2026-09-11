@@ -46,10 +46,13 @@ def save_artifact(root: Path, artifact: CapabilityArtifact, *, redactor: Redacto
     d = artifact_dir(root, artifact.name)
     d.mkdir(parents=True, exist_ok=True)
     path = d / f"v{artifact.version}.json"
-    text = artifact.model_dump_json(indent=2, exclude_none=True) + "\n"
+    data = artifact.model_dump(mode="json", exclude_none=True)
     if redactor is not None:
-        text = redactor.redact(text)
-    path.write_text(text, encoding="utf-8")
+        # Redact string values only. Running the patterns over the serialised text can
+        # rewrite a number (a phone-shaped float such as a bbox y of 123.4140625) and
+        # leave invalid JSON behind.
+        data = redactor.redact_obj(data)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return path
 
 

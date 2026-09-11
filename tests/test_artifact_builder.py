@@ -21,6 +21,8 @@ from cua.artifact.builder import (
 from cua.artifact.schema import CapabilityArtifact, DeclaredConditions
 from cua.artifact.store import load_artifact, next_version, save_artifact, write_json_schema
 from cua.artifact.targets import BBox, RecordedElement
+from cua.policy.model import AllowlistPolicy, Policy
+from cua.policy.redaction import Redactor
 from cua.surface.playwright_surface import PlaywrightSurface
 
 CONDITIONS = Path("policies/mock-portal.conditions.json")
@@ -99,6 +101,33 @@ def test_split_phases_ends_bootstrap_at_first_navigating_click_after_a_secret() 
     ]
     assert split_phases(steps) == 3
     assert split_phases(steps[3:]) == 0  # no secret typed: everything is main
+
+
+def test_save_artifact_with_redactor_keeps_numbers_and_valid_json(tmp_path: Path) -> None:
+    # Regression: the phone pattern used to match the bbox y coordinates of the login
+    # controls (123.4140625 ...) in the serialised JSON, leaving an unloadable artifact.
+    def element(role: str, name: str, y: float) -> RecordedElement:
+        return RecordedElement(role=role, name=name, tag="input", css=f"input[name=\"{name}\"]", bbox=BBox(x=293.5, y=y, width=190, height=21.5))
+
+    steps = [
+        _trace_step(0, "type", "http://h/login", "http://h/login", ref="e1", text="{{secret:U}}"),
+        _trace_step(1, "type", "http://h/login", "http://h/login", ref="e2", text="{{secret:P}}"),
+        _trace_step(2, "click", "http://h/login", "http://h/members/search", ref="e3"),
+    ]
+    for s, (role, name, y) in zip(steps, [("textbox", "Username", 123.4140625), ("textbox", "Password", 154.9140625), ("button", "Sign In", 186.4140625)]):
+        s.element = element(role, name, y)
+    trace = Trace(
+        run_id="r", goal="g", start_url="http://h/login", capability_name="c", inputs={}, status="success",
+        steps=steps, final_url="http://h/members/search", final_title="Member Lookup",
+    )
+    artifact = build_artifact(trace, base_url="http://h", app="a")
+    redactor = Redactor(Policy(name="p", allowlist=AllowlistPolicy(origins=["http://h"])).redaction.patterns)
+    path = save_artifact(tmp_path, artifact, redactor=redactor)
+    assert "REDACTED" not in path.read_text()
+    loaded = load_artifact(path)
+    assert loaded == artifact
+    ys = [c.bbox.y for s in loaded.steps if s.target for c in s.target.candidates if c.by == "bbox" and c.bbox]
+    assert ys == [123.4140625, 154.9140625, 186.4140625]
 
 
 def test_non_success_trace_cannot_become_a_capability() -> None:

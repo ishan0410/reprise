@@ -181,6 +181,13 @@ def test_default_pii_patterns_cover_card_email_phone() -> None:
     assert "10001" in out and "2015-03-12" in out
 
 
+def test_default_pii_patterns_leave_decimal_numbers_alone() -> None:
+    r = Redactor(Policy(name="p", allowlist=AllowlistPolicy(origins=[BASE])).redaction.patterns)
+    out = r.redact('"y": 123.4140625, "x": 154.9140625, pi 3.1415926535, tel 555.123.4567')
+    assert "123.4140625" in out and "154.9140625" in out and "3.1415926535" in out
+    assert "555.123.4567" not in out and "[REDACTED:pii]" in out
+
+
 # ------------------------------------------------------------- intersection
 
 

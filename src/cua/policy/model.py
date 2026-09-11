@@ -28,7 +28,9 @@ DEFAULT_REDACTION_PATTERNS: tuple[str, ...] = (
     r"\b\d{3}-\d{2}-\d{4}\b",  # US SSN
     r"\b(?:\d[ -]?){13,19}\b",  # payment card numbers
     r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",  # email
-    r"\b(?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}\b",  # US phone
+    # US phone. The lookarounds keep it from firing inside a decimal number (a bbox
+    # coordinate such as 123.4140625), which the dot separator would otherwise accept.
+    r"(?<!\.)\b(?!\d+\.\d+(?![\d.]))(?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}\b",
 )
 
 #: Control names that usually mean "commit something". A heuristic, so it only ever raises risk.
