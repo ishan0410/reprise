@@ -93,12 +93,15 @@ def main(argv: list[str] | None = None) -> int:
     policy = Policy.load(args.policy)
     secrets = SecretStore(policy.secrets.allowed)
     redactor = Redactor(policy.redaction.patterns, secrets=secrets.known_values())
-    recorder = RunRecorder(args.evidence_dir, "invoke", redactor=redactor, screenshot_mode="on_failure")
     try:
         artifact = catalog.latest(args.name)
     except CapabilityNotFound:
         print(f"error: no capability named {args.name!r}", file=sys.stderr)
         return 2
+    if catalog.require_approved and artifact.status != "approved":
+        print(f"error: {args.name} v{artifact.version} is {artifact.status}; approve it before agents may invoke it", file=sys.stderr)
+        return 4
+    recorder = RunRecorder(args.evidence_dir, "invoke", redactor=redactor, screenshot_mode="on_failure")
     surface = PlaywrightSurface(headless=not args.headed, viewport=artifact.target.viewport)
     surface.open()
     try:

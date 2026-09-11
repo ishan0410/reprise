@@ -17,8 +17,14 @@ import time
 from dataclasses import asdict, dataclass
 from typing import Literal, cast
 
-FaultKind = Literal["slow_load", "app_error", "session_timeout", "interstitial_notice"]
-FAULT_KINDS: tuple[FaultKind, ...] = ("slow_load", "app_error", "session_timeout", "interstitial_notice")
+FaultKind = Literal["slow_load", "app_error", "session_timeout", "interstitial_notice", "unexpected_dialog"]
+FAULT_KINDS: tuple[FaultKind, ...] = (
+    "slow_load",
+    "app_error",
+    "session_timeout",
+    "interstitial_notice",
+    "unexpected_dialog",
+)
 
 #: Paths the injector never touches, so recovery flows (re-login, dismissing a notice) stay deterministic.
 _EXEMPT_PREFIXES = ("/__admin", "/notice", "/login", "/logout")

@@ -196,6 +196,18 @@ Sunday 02:00&ndash;04:00 ET for scheduled maintenance. No action is required.</p
     return layout("System Notice", body, user=user)
 
 
+def password_expiry_page(next_url: str, *, user: str | None) -> str:
+    """An interstitial the demo capabilities do NOT declare: the stand-in for an unknown condition."""
+    body = f"""{_title_bar("Security Notice")}
+<p class="note"><b>Your password expires in 3 days.</b> Per policy IS-114 you must change it before it expires.
+You may continue for now.</p>
+<form method="post" action="/notice/ack" style="display:inline">
+<input type="hidden" name="next" value="{e(next_url)}">
+<input type="submit" value="Remind Me Later"></form>
+&nbsp; <a href="/login">Change Password Now</a>"""
+    return layout("Security Notice", body, user=user)
+
+
 def app_error_page(reference: str) -> str:
     body = f"""{_title_bar("Application Error")}
 <p class="err">{e(MSG_APP_ERROR)}</p>

@@ -103,6 +103,8 @@ def create_app() -> Flask:
             return views.session_expired_page(next_url), 401
         if fault.kind == "interstitial_notice":
             return views.system_notice_page(next_url, user=_current_user()), 200
+        if fault.kind == "unexpected_dialog":
+            return views.password_expiry_page(next_url, user=_current_user()), 200
         if fault.kind == "app_error":
             return views.app_error_page(secrets.token_hex(3).upper()), 500
         return None

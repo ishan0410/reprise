@@ -82,7 +82,7 @@ def _format_action(a: dict[str, Any]) -> str:
     if kind == "key":
         return f"pressed {a.get('key')} in {where}"
     if kind == "submit":
-        return f"submitted form {where}"
+        return f"submitted form {name!r}" if name else "submitted a form"
     if kind == "navigated":
         return f"navigated to {a.get('url')}"
     return f"{kind} {where}"

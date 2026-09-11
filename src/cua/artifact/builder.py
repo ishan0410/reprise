@@ -246,7 +246,8 @@ def build_artifact(
         id=f"cap_{trace.capability_name}",
         name=trace.capability_name,
         version=version,
-        description=trace.goal,
+        # "Look up member 10001" -> "Look up member {{input:member_id}}": the capability is generic.
+        description=parameterise(trace.goal, literal_inputs, sensitive),
         target=TargetSurface(app=app, app_version=app_version, base_url=base_url, viewport=viewport or {"width": 1280, "height": 900}),
         inputs=[
             InputParam(name=n, sensitive=n in sensitive, example=None if n in sensitive else v)

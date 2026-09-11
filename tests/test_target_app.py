@@ -8,6 +8,7 @@ later change to the mock app can't silently invalidate the evidence runs.
 from __future__ import annotations
 
 import time
+from pathlib import Path
 
 import pytest
 from flask import Flask
@@ -153,6 +154,15 @@ def test_injected_interstitial_notice_then_continue(client: FlaskClient) -> None
     assert ack.status_code == 302
     assert ack.headers["Location"].endswith("/members/10001")
     assert b"Member Detail" in client.get("/members/10001").data
+
+
+def test_injected_unexpected_dialog_is_not_a_declared_condition(client: FlaskClient) -> None:
+    login(client)
+    client.post("/__admin/inject", json={"kind": "unexpected_dialog"})
+    r = client.get("/members/10001")
+    assert r.status_code == 200 and b"Security Notice" in r.data and b'value="Remind Me Later"' in r.data
+    conditions = Path("policies/mock-portal.conditions.json").read_text()
+    assert "Remind Me Later" not in conditions and "Security Notice" not in conditions
 
 
 def test_injected_app_error_affects_only_the_next_request(client: FlaskClient) -> None:
