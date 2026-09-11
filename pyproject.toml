@@ -30,6 +30,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["browser: launches a real Chromium via Playwright"]
 
 [tool.mypy]
 python_version = "3.12"
