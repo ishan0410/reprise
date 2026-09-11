@@ -1,0 +1,73 @@
+{
+  "outcomes": [
+    {
+      "code": "MEMBER_NOT_FOUND",
+      "description": "The member ID does not exist. A legitimate answer, not an error.",
+      "detect": { "any_of": [ { "by": "text", "text": "No member found for ID" } ] },
+      "sets": { "found": "false" },
+      "terminal": true
+    },
+    {
+      "code": "INVALID_MEMBER_ID",
+      "description": "The application rejected the member ID format.",
+      "detect": { "any_of": [ { "by": "text", "text": "Member ID must be numeric." } ] },
+      "sets": { "found": "false" },
+      "terminal": true
+    },
+    {
+      "code": "VALIDATION_ERROR",
+      "description": "A form field was rejected by the application's own validation.",
+      "detect": { "any_of": [
+        { "by": "text", "text": "is required." },
+        { "by": "text", "text": "must be 40 characters or fewer." },
+        { "by": "text", "text": "Initial deposit must be a number" },
+        { "by": "text", "text": "Select a valid account type." }
+      ] },
+      "terminal": true
+    }
+  ],
+  "recoverables": [
+    {
+      "code": "SESSION_EXPIRED",
+      "description": "The session timed out. Sign in again and restart the interrupted phase.",
+      "detect": { "any_of": [ { "by": "text", "text": "Your session has expired" } ] },
+      "recovery": { "kind": "run_phase", "phase": "bootstrap", "then": "restart_phase" },
+      "max_attempts": 1
+    },
+    {
+      "code": "SYSTEM_NOTICE",
+      "description": "A known maintenance interstitial. Dismiss it and restart the interrupted phase.",
+      "detect": { "any_of": [ { "by": "role", "role": "button", "name": "Continue" } ], "title_contains": "System Notice" },
+      "recovery": {
+        "kind": "click",
+        "target": {
+          "description": "Continue past the system notice",
+          "candidates": [ { "by": "role", "role": "button", "name": "Continue", "exact": true } ]
+        },
+        "then": "restart_phase"
+      },
+      "max_attempts": 2
+    }
+  ],
+  "failures": [
+    {
+      "code": "PERMISSION_DENIED",
+      "category": "authorization",
+      "description": "The operator account is not authorized to view this record. Retrying will not help.",
+      "detect": { "any_of": [ { "by": "text", "text": "You do not have permission" } ] }
+    },
+    {
+      "code": "INVALID_LOGIN",
+      "category": "authentication",
+      "description": "The configured credentials were rejected.",
+      "detect": { "any_of": [ { "by": "text", "text": "Invalid username or password." } ] }
+    },
+    {
+      "code": "APP_ERROR",
+      "category": "application",
+      "description": "The application returned an error page.",
+      "detect": { "any_of": [ { "by": "text", "text": "An unexpected error occurred" } ] },
+      "retryable": true
+    }
+  ]
+}

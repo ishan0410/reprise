@@ -19,6 +19,9 @@ from dotenv import load_dotenv
 
 from cua.agent.llm import FallbackProvider, LLMProvider
 from cua.agent.loop import DiscoveryAgent, DiscoveryRequest
+from cua.artifact.builder import build_artifact
+from cua.artifact.schema import DeclaredConditions
+from cua.artifact.store import next_version, save_artifact
 from cua.evidence.recorder import RunRecorder, ScreenshotMode
 from cua.policy.gate import PolicyGate
 from cua.policy.model import Policy
@@ -79,6 +82,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--input", action="append", metavar="NAME=VALUE", help="task input (repeatable)")
     p.add_argument("--sensitive-input", action="append", metavar="NAME=VALUE", help="input hidden from the model")
     p.add_argument("--policy", default="policies/mock-portal.toml", type=Path)
+    p.add_argument(
+        "--conditions",
+        type=Path,
+        default=Path("policies/mock-portal.conditions.json"),
+        help="reviewed per-app outcomes/recoverables/failures merged into the artifact",
+    )
+    p.add_argument("--app", default="harborview-member-console", help="logical application id for the artifact")
+    p.add_argument("--app-version", default="v4.2")
+    p.add_argument("--artifacts-dir", type=Path, default=Path("artifacts"))
     p.add_argument("--provider", default="gemini,groq", help="comma-separated chain: gemini,groq | scripted")
     p.add_argument("--script", type=Path, default=None, help="tool-call script for --provider scripted")
     p.add_argument("--headed", action="store_true", help="show the browser window")
@@ -137,7 +149,28 @@ def main(argv: list[str] | None = None) -> int:
     shown = {k: ("[sensitive]" if k in trace.sensitive_outputs else v) for k, v in trace.outputs.items()}
     print(f"outputs  : {json.dumps(shown)}")
     print(f"evidence : {recorder.dir}")
-    return 0 if trace.status == "success" else 1
+    if trace.status != "success":
+        return 1
+
+    conditions = DeclaredConditions()
+    if args.conditions and args.conditions.exists():
+        conditions = DeclaredConditions.model_validate_json(args.conditions.read_text(encoding="utf-8"))
+    try:
+        artifact = build_artifact(
+            trace,
+            base_url=base_url,
+            app=args.app,
+            app_version=args.app_version,
+            conditions=conditions,
+            version=next_version(args.artifacts_dir, args.name),
+            evidence_dir=str(recorder.dir),
+        )
+    except ValueError as ex:
+        print(f"artifact : NOT built ({ex})")
+        return 2
+    path = save_artifact(args.artifacts_dir, artifact, redactor=redactor)
+    print(f"artifact : {path}  ({artifact.id} v{artifact.version}, {len(artifact.steps)} steps, status={artifact.status})")
+    return 0
 
 
 if __name__ == "__main__":

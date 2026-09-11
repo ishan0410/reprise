@@ -24,6 +24,7 @@ cua-target-app = "cua.target_app.server:main"
 cua-discover = "cua.cli.discover:main"
 cua-replay = "cua.cli.replay:main"
 cua-resume = "cua.cli.resume:main"
+cua-schema = "cua.cli.schema:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
