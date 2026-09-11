@@ -1,0 +1,130 @@
+{
+  "status": "success",
+  "capability_id": "cap_lookup_member_balance",
+  "capability_name": "lookup_member_balance",
+  "capability_version": "1.0.0",
+  "run_id": "invoke-20260911T033221Z-850b",
+  "inputs": {
+    "member_id": "10001"
+  },
+  "outputs": {
+    "savings_balance": "[REDACTED:savings_balance]"
+  },
+  "outcome": null,
+  "error": null,
+  "steps": [
+    {
+      "step_id": "s1",
+      "phase": "bootstrap",
+      "action": "navigate",
+      "description": "Open the application",
+      "status": "ok",
+      "candidate_index": null,
+      "used_fallback": false,
+      "locator": null,
+      "duration_ms": 97,
+      "detail": "",
+      "url_after": "http://localhost:4000/login"
+    },
+    {
+      "step_id": "s2",
+      "phase": "bootstrap",
+      "action": "type",
+      "description": "Enter the target username into the Username field",
+      "status": "ok",
+      "candidate_index": 0,
+      "used_fallback": false,
+      "locator": "role role=textbox name=\"Username\" exact",
+      "duration_ms": 60,
+      "detail": "",
+      "url_after": "http://localhost:4000/login"
+    },
+    {
+      "step_id": "s3",
+      "phase": "bootstrap",
+      "action": "type",
+      "description": "Type password into the Password textbox",
+      "status": "ok",
+      "candidate_index": 0,
+      "used_fallback": false,
+      "locator": "role role=textbox name=\"Password\" exact",
+      "duration_ms": 53,
+      "detail": "",
+      "url_after": "http://localhost:4000/login"
+    },
+    {
+      "step_id": "s4",
+      "phase": "bootstrap",
+      "action": "click",
+      "description": "Click Sign In button to authenticate.",
+      "status": "ok",
+      "candidate_index": 0,
+      "used_fallback": false,
+      "locator": "role role=button name=\"Sign In\" exact",
+      "duration_ms": 64,
+      "detail": "",
+      "url_after": "http://localhost:4000/members/search"
+    },
+    {
+      "step_id": "s5",
+      "phase": "main",
+      "action": "navigate",
+      "description": "Go to the flow's entry page",
+      "status": "ok",
+      "candidate_index": null,
+      "used_fallback": false,
+      "locator": null,
+      "duration_ms": 24,
+      "detail": "",
+      "url_after": "http://localhost:4000/members/search"
+    },
+    {
+      "step_id": "s6",
+      "phase": "main",
+      "action": "type",
+      "description": "Enter member ID 10001 into the Member ID search field",
+      "status": "ok",
+      "candidate_index": 0,
+      "used_fallback": false,
+      "locator": "role role=textbox name=\"Member ID\" exact",
+      "duration_ms": 12,
+      "detail": "",
+      "url_after": "http://localhost:4000/members/search"
+    },
+    {
+      "step_id": "s7",
+      "phase": "main",
+      "action": "click",
+      "description": "Click Search to look up member 10001",
+      "status": "ok",
+      "candidate_index": 0,
+      "used_fallback": false,
+      "locator": "role role=button name=\"Search\" exact",
+      "duration_ms": 74,
+      "detail": "",
+      "url_after": "http://localhost:4000/members/10001"
+    },
+    {
+      "step_id": "s8",
+      "phase": "main",
+      "action": "extract",
+      "description": "Extract the savings balance for member 10001 from the account table.",
+      "status": "ok",
+      "candidate_index": 0,
+      "used_fallback": false,
+      "locator": "role role=cell nth=3 within(role role=cell name=\"Savings\" exact ^row)",
+      "duration_ms": 26,
+      "detail": "",
+      "url_after": "http://localhost:4000/members/10001"
+    }
+  ],
+  "recoveries": [],
+  "drift": {
+    "fallback_steps": []
+  },
+  "control_events": [],
+  "started_at": "2026-09-11T03:32:22.505939+00:00",
+  "finished_at": "2026-09-11T03:32:22.922336+00:00",
+  "duration_ms": 416,
+  "evidence_dir": "evidence/replay/invoke-20260911T033221Z-850b"
+}

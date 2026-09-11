@@ -1,0 +1,11 @@
+{"ts": "2026-09-11T02:52:50.516414+00:00", "kind": "replay.start", "capability": "cap_lookup_member_balance", "version": "1.0.0", "inputs": {"member_id": "10003"}}
+{"ts": "2026-09-11T02:52:50.609483+00:00", "kind": "step", "step": "s1", "action": "navigate", "status": "ok", "candidate_index": null, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/login", "duration_ms": 92}
+{"ts": "2026-09-11T02:52:50.660060+00:00", "kind": "step", "step": "s2", "action": "type", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/login", "duration_ms": 50}
+{"ts": "2026-09-11T02:52:50.702823+00:00", "kind": "step", "step": "s3", "action": "type", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/login", "duration_ms": 42}
+{"ts": "2026-09-11T02:52:50.772524+00:00", "kind": "step", "step": "s4", "action": "click", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/members/search", "duration_ms": 69}
+{"ts": "2026-09-11T02:52:50.797794+00:00", "kind": "step", "step": "s5", "action": "navigate", "status": "ok", "candidate_index": null, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/members/search", "duration_ms": 25}
+{"ts": "2026-09-11T02:52:50.810750+00:00", "kind": "step", "step": "s6", "action": "type", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/members/search", "duration_ms": 12}
+{"ts": "2026-09-11T02:52:50.878239+00:00", "kind": "step", "step": "s7", "action": "click", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/members/10003", "duration_ms": 67}
+{"ts": "2026-09-11T02:52:50.905950+00:00", "kind": "output", "step": "s8", "name": "savings_balance", "value": "[REDACTED:savings_balance]"}
+{"ts": "2026-09-11T02:52:50.906038+00:00", "kind": "step", "step": "s8", "action": "extract", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/members/10003", "duration_ms": 27}
+{"ts": "2026-09-11T02:52:50.907376+00:00", "kind": "replay.end", "status": "success", "duration_ms": 390, "drift": false}

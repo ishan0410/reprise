@@ -1,0 +1,823 @@
+{
+  "schema_version": "1.0",
+  "id": "cap_open_sub_account_review",
+  "name": "open_sub_account_review",
+  "version": "1.0.0",
+  "description": "Open a new {{input:account_type}} sub-account nicknamed {{input:nickname}} with a {{input:initial_deposit}} initial deposit for member {{input:member_id}} and reach the review screen without confirming",
+  "status": "draft",
+  "target": {
+    "kind": "web",
+    "app": "harborview-member-console",
+    "app_version": "v4.2",
+    "base_url": "http://localhost:4000",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    }
+  },
+  "inputs": [
+    {
+      "name": "member_id",
+      "type": "string",
+      "description": "",
+      "required": true,
+      "sensitive": false,
+      "example": "10002"
+    },
+    {
+      "name": "account_type",
+      "type": "string",
+      "description": "",
+      "required": true,
+      "sensitive": false,
+      "example": "Checking"
+    },
+    {
+      "name": "nickname",
+      "type": "string",
+      "description": "",
+      "required": true,
+      "sensitive": false,
+      "example": "Bills"
+    },
+    {
+      "name": "initial_deposit",
+      "type": "string",
+      "description": "",
+      "required": true,
+      "sensitive": false,
+      "example": "25.00"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "found",
+      "type": "string",
+      "description": "Set by outcome MEMBER_NOT_FOUND",
+      "sensitive": false
+    }
+  ],
+  "steps": [
+    {
+      "id": "s1",
+      "phase": "bootstrap",
+      "action": "navigate",
+      "description": "Open the application",
+      "url": "{{base_url}}/login",
+      "risk": "safe"
+    },
+    {
+      "id": "s2",
+      "phase": "bootstrap",
+      "action": "type",
+      "description": "Enter staff username to log in.",
+      "target": {
+        "description": "Username",
+        "candidates": [
+          {
+            "by": "role",
+            "role": "textbox",
+            "name": "Username",
+            "exact": true
+          },
+          {
+            "by": "css",
+            "selector": "input[name=\"username\"]",
+            "exact": false
+          },
+          {
+            "by": "bbox",
+            "bbox": {
+              "x": 123.5,
+              "y": 123.4140625,
+              "width": 147.0,
+              "height": 21.5
+            },
+            "exact": false
+          }
+        ],
+        "recorded": {
+          "role": "textbox",
+          "name": "Username",
+          "tag": "input",
+          "css": "input[name=\"username\"]",
+          "bbox": {
+            "x": 123.5,
+            "y": 123.4140625,
+            "width": 147.0,
+            "height": 21.5
+          }
+        }
+      },
+      "value": "{{secret:TARGET_USERNAME}}",
+      "risk": "safe"
+    },
+    {
+      "id": "s3",
+      "phase": "bootstrap",
+      "action": "type",
+      "description": "Enter password for sign in",
+      "target": {
+        "description": "Password",
+        "candidates": [
+          {
+            "by": "role",
+            "role": "textbox",
+            "name": "Password",
+            "exact": true
+          },
+          {
+            "by": "css",
+            "selector": "input[name=\"password\"]",
+            "exact": false
+          },
+          {
+            "by": "bbox",
+            "bbox": {
+              "x": 123.5,
+              "y": 154.9140625,
+              "width": 147.0,
+              "height": 21.5
+            },
+            "exact": false
+          }
+        ],
+        "recorded": {
+          "role": "textbox",
+          "name": "Password",
+          "tag": "input",
+          "css": "input[name=\"password\"]",
+          "bbox": {
+            "x": 123.5,
+            "y": 154.9140625,
+            "width": 147.0,
+            "height": 21.5
+          }
+        }
+      },
+      "value": "{{secret:TARGET_PASSWORD}}",
+      "risk": "safe"
+    },
+    {
+      "id": "s4",
+      "phase": "bootstrap",
+      "action": "click",
+      "description": "Click the Sign In button to authenticate.",
+      "target": {
+        "description": "Sign In",
+        "candidates": [
+          {
+            "by": "role",
+            "role": "button",
+            "name": "Sign In",
+            "exact": true
+          },
+          {
+            "by": "text",
+            "text": "Sign In",
+            "exact": true
+          },
+          {
+            "by": "css",
+            "selector": "body > table:nth-of-type(2) > tbody > tr > td > table > tbody > tr > td > form > table > tbody > tr:nth-of-type(3) > td:nth-of-type(2) > input",
+            "exact": false
+          },
+          {
+            "by": "bbox",
+            "bbox": {
+              "x": 123.5,
+              "y": 186.4140625,
+              "width": 57.5078125,
+              "height": 21.5
+            },
+            "exact": false
+          }
+        ],
+        "recorded": {
+          "role": "button",
+          "name": "Sign In",
+          "tag": "input",
+          "text": "Sign In",
+          "css": "body > table:nth-of-type(2) > tbody > tr > td > table > tbody > tr > td > form > table > tbody > tr:nth-of-type(3) > td:nth-of-type(2) > input",
+          "bbox": {
+            "x": 123.5,
+            "y": 186.4140625,
+            "width": 57.5078125,
+            "height": 21.5
+          }
+        }
+      },
+      "risk": "safe",
+      "checkpoint": {
+        "description": "Reached 'Member Lookup'",
+        "url_pattern": "/members/search",
+        "title_contains": "Member Lookup",
+        "present": [],
+        "absent": [],
+        "timeout_ms": 10000
+      }
+    },
+    {
+      "id": "s5",
+      "phase": "main",
+      "action": "navigate",
+      "description": "Go to the flow's entry page",
+      "url": "{{base_url}}/members/search",
+      "risk": "safe"
+    },
+    {
+      "id": "s6",
+      "phase": "main",
+      "action": "type",
+      "description": "Enter member ID 10002 into the search box.",
+      "target": {
+        "description": "Member ID",
+        "candidates": [
+          {
+            "by": "role",
+            "role": "textbox",
+            "name": "Member ID",
+            "exact": true
+          },
+          {
+            "by": "css",
+            "selector": "input[name=\"memberId\"]",
+            "exact": false
+          },
+          {
+            "by": "bbox",
+            "bbox": {
+              "x": 131.859375,
+              "y": 114.5,
+              "width": 93.5,
+              "height": 21.5
+            },
+            "exact": false
+          }
+        ],
+        "recorded": {
+          "role": "textbox",
+          "name": "Member ID",
+          "tag": "input",
+          "css": "input[name=\"memberId\"]",
+          "bbox": {
+            "x": 131.859375,
+            "y": 114.5,
+            "width": 93.5,
+            "height": 21.5
+          }
+        }
+      },
+      "value": "{{input:member_id}}",
+      "risk": "safe"
+    },
+    {
+      "id": "s7",
+      "phase": "main",
+      "action": "click",
+      "description": "Click the Search button to look up member 10002.",
+      "target": {
+        "description": "Search",
+        "candidates": [
+          {
+            "by": "role",
+            "role": "button",
+            "name": "Search",
+            "exact": true
+          },
+          {
+            "by": "text",
+            "text": "Search",
+            "exact": true
+          },
+          {
+            "by": "css",
+            "selector": "body > table:nth-of-type(2) > tbody > tr > td > table > tbody > tr > td > form > table > tbody > tr > td:nth-of-type(3) > input",
+            "exact": false
+          },
+          {
+            "by": "bbox",
+            "bbox": {
+              "x": 235.359375,
+              "y": 114.5,
+              "width": 58.2421875,
+              "height": 21.5
+            },
+            "exact": false
+          }
+        ],
+        "recorded": {
+          "role": "button",
+          "name": "Search",
+          "tag": "input",
+          "text": "Search",
+          "css": "body > table:nth-of-type(2) > tbody > tr > td > table > tbody > tr > td > form > table > tbody > tr > td:nth-of-type(3) > input",
+          "bbox": {
+            "x": 235.359375,
+            "y": 114.5,
+            "width": 58.2421875,
+            "height": 21.5
+          }
+        }
+      },
+      "risk": "safe",
+      "checkpoint": {
+        "description": "Reached 'Member Detail'",
+        "url_pattern": "/members/{{input:member_id}}",
+        "title_contains": "Member Detail",
+        "present": [],
+        "absent": [],
+        "timeout_ms": 10000
+      }
+    },
+    {
+      "id": "s8",
+      "phase": "main",
+      "action": "click",
+      "description": "Click 'Open Sub-Account' link to start the sub-account creation process.",
+      "target": {
+        "description": "Open Sub-Account",
+        "candidates": [
+          {
+            "by": "role",
+            "role": "link",
+            "name": "Open Sub-Account",
+            "exact": true
+          },
+          {
+            "by": "text",
+            "text": "Open Sub-Account",
+            "exact": true
+          },
+          {
+            "by": "css",
+            "selector": "body > table:nth-of-type(2) > tbody > tr > td > table > tbody > tr > td > a:nth-of-type(1)",
+            "exact": false
+          },
+          {
+            "by": "bbox",
+            "bbox": {
+              "x": 19.0,
+              "y": 292.0,
+              "width": 149.625,
+              "height": 19.5
+            },
+            "exact": false
+          }
+        ],
+        "recorded": {
+          "role": "link",
+          "name": "Open Sub-Account",
+          "tag": "a",
+          "text": "Open Sub-Account",
+          "css": "body > table:nth-of-type(2) > tbody > tr > td > table > tbody > tr > td > a:nth-of-type(1)",
+          "bbox": {
+            "x": 19.0,
+            "y": 292.0,
+            "width": 149.625,
+            "height": 19.5
+          }
+        }
+      },
+      "risk": "safe",
+      "checkpoint": {
+        "description": "Reached 'Open Sub-Account'",
+        "url_pattern": "/members/{{input:member_id}}/sub-accounts/new",
+        "title_contains": "Open Sub-Account",
+        "present": [],
+        "absent": [],
+        "timeout_ms": 10000
+      }
+    },
+    {
+      "id": "s9",
+      "phase": "main",
+      "action": "select",
+      "description": "Select Checking as the account type.",
+      "target": {
+        "description": "Account Type",
+        "candidates": [
+          {
+            "by": "role",
+            "role": "combobox",
+            "name": "Account Type",
+            "exact": true
+          },
+          {
+            "by": "css",
+            "selector": "select[name=\"accountType\"]",
+            "exact": false
+          },
+          {
+            "by": "bbox",
+            "bbox": {
+              "x": 154.40625,
+              "y": 114.75,
+              "width": 106.5,
+              "height": 19.0
+            },
+            "exact": false
+          }
+        ],
+        "recorded": {
+          "role": "combobox",
+          "name": "Account Type",
+          "tag": "select",
+          "css": "select[name=\"accountType\"]",
+          "bbox": {
+            "x": 154.40625,
+            "y": 114.75,
+            "width": 106.5,
+            "height": 19.0
+          }
+        }
+      },
+      "value": "{{input:account_type}}",
+      "risk": "safe"
+    },
+    {
+      "id": "s10",
+      "phase": "main",
+      "action": "type",
+      "description": "Enter the account nickname 'Bills' into the Nickname field.",
+      "target": {
+        "description": "Nickname",
+        "candidates": [
+          {
+            "by": "role",
+            "role": "textbox",
+            "name": "Nickname",
+            "exact": true
+          },
+          {
+            "by": "css",
+            "selector": "input[name=\"nickname\"]",
+            "exact": false
+          },
+          {
+            "by": "bbox",
+            "bbox": {
+              "x": 154.40625,
+              "y": 144.0,
+              "width": 213.5,
+              "height": 21.5
+            },
+            "exact": false
+          }
+        ],
+        "recorded": {
+          "role": "textbox",
+          "name": "Nickname",
+          "tag": "input",
+          "css": "input[name=\"nickname\"]",
+          "bbox": {
+            "x": 154.40625,
+            "y": 144.0,
+            "width": 213.5,
+            "height": 21.5
+          }
+        }
+      },
+      "value": "{{input:nickname}}",
+      "risk": "safe"
+    },
+    {
+      "id": "s11",
+      "phase": "main",
+      "action": "type",
+      "description": "Enter the initial deposit amount into the Initial Deposit field.",
+      "target": {
+        "description": "Initial Deposit",
+        "candidates": [
+          {
+            "by": "role",
+            "role": "textbox",
+            "name": "Initial Deposit",
+            "exact": true
+          },
+          {
+            "by": "css",
+            "selector": "input[name=\"initialDeposit\"]",
+            "exact": false
+          },
+          {
+            "by": "bbox",
+            "bbox": {
+              "x": 154.40625,
+              "y": 175.5,
+              "width": 93.5,
+              "height": 21.5
+            },
+            "exact": false
+          }
+        ],
+        "recorded": {
+          "role": "textbox",
+          "name": "Initial Deposit",
+          "tag": "input",
+          "css": "input[name=\"initialDeposit\"]",
+          "bbox": {
+            "x": 154.40625,
+            "y": 175.5,
+            "width": 93.5,
+            "height": 21.5
+          }
+        }
+      },
+      "value": "{{input:initial_deposit}}",
+      "risk": "safe"
+    },
+    {
+      "id": "s12",
+      "phase": "main",
+      "action": "click",
+      "description": "Click the Review button to proceed to the review screen without confirming.",
+      "target": {
+        "description": "Review",
+        "candidates": [
+          {
+            "by": "role",
+            "role": "button",
+            "name": "Review",
+            "exact": true
+          },
+          {
+            "by": "text",
+            "text": "Review",
+            "exact": true
+          },
+          {
+            "by": "css",
+            "selector": "body > table:nth-of-type(2) > tbody > tr > td > table > tbody > tr > td > form > table > tbody > tr:nth-of-type(4) > td:nth-of-type(2) > input",
+            "exact": false
+          },
+          {
+            "by": "bbox",
+            "bbox": {
+              "x": 154.40625,
+              "y": 208.0,
+              "width": 59.7109375,
+              "height": 21.5
+            },
+            "exact": false
+          }
+        ],
+        "recorded": {
+          "role": "button",
+          "name": "Review",
+          "tag": "input",
+          "text": "Review",
+          "css": "body > table:nth-of-type(2) > tbody > tr > td > table > tbody > tr > td > form > table > tbody > tr:nth-of-type(4) > td:nth-of-type(2) > input",
+          "bbox": {
+            "x": 154.40625,
+            "y": 208.0,
+            "width": 59.7109375,
+            "height": 21.5
+          }
+        }
+      },
+      "risk": "safe",
+      "checkpoint": {
+        "description": "Reached 'Review New Sub-Account'",
+        "url_pattern": "/members/{{input:member_id}}/sub-accounts/review",
+        "title_contains": "Review New Sub-Account",
+        "present": [],
+        "absent": [],
+        "timeout_ms": 10000
+      }
+    }
+  ],
+  "success": {
+    "description": "Final state observed at the end of discovery",
+    "url_pattern": "/members/{{input:member_id}}/sub-accounts/review",
+    "title_contains": "Review New Sub-Account",
+    "present": [],
+    "absent": [],
+    "timeout_ms": 10000,
+    "outputs_required": []
+  },
+  "outcomes": [
+    {
+      "code": "MEMBER_NOT_FOUND",
+      "description": "The member ID does not exist. A legitimate answer, not an error.",
+      "detect": {
+        "any_of": [
+          {
+            "by": "text",
+            "text": "No member found for ID",
+            "exact": false
+          }
+        ]
+      },
+      "sets": {
+        "found": "false"
+      },
+      "terminal": true
+    },
+    {
+      "code": "INVALID_MEMBER_ID",
+      "description": "The application rejected the member ID format.",
+      "detect": {
+        "any_of": [
+          {
+            "by": "text",
+            "text": "Member ID must be numeric.",
+            "exact": false
+          }
+        ]
+      },
+      "sets": {
+        "found": "false"
+      },
+      "terminal": true
+    },
+    {
+      "code": "VALIDATION_ERROR",
+      "description": "A form field was rejected by the application's own validation.",
+      "detect": {
+        "any_of": [
+          {
+            "by": "text",
+            "text": "Nickname is required.",
+            "exact": false
+          },
+          {
+            "by": "text",
+            "text": "must be 40 characters or fewer.",
+            "exact": false
+          },
+          {
+            "by": "text",
+            "text": "Initial deposit must be a number",
+            "exact": false
+          },
+          {
+            "by": "text",
+            "text": "Select a valid account type.",
+            "exact": false
+          }
+        ]
+      },
+      "sets": {},
+      "terminal": true
+    }
+  ],
+  "recoverables": [
+    {
+      "code": "SESSION_EXPIRED",
+      "description": "The session timed out. Sign in again and restart the interrupted phase.",
+      "detect": {
+        "any_of": [
+          {
+            "by": "text",
+            "text": "Your session has expired",
+            "exact": false
+          }
+        ]
+      },
+      "recovery": {
+        "kind": "run_phase",
+        "phase": "bootstrap",
+        "then": "restart_phase"
+      },
+      "max_attempts": 1
+    },
+    {
+      "code": "SYSTEM_NOTICE",
+      "description": "A known maintenance interstitial. Dismiss it and restart the interrupted phase.",
+      "detect": {
+        "any_of": [
+          {
+            "by": "role",
+            "role": "button",
+            "name": "Continue",
+            "exact": false
+          }
+        ],
+        "title_contains": "System Notice"
+      },
+      "recovery": {
+        "kind": "click",
+        "target": {
+          "description": "Continue past the system notice",
+          "candidates": [
+            {
+              "by": "role",
+              "role": "button",
+              "name": "Continue",
+              "exact": true
+            }
+          ]
+        },
+        "then": "restart_phase"
+      },
+      "max_attempts": 2
+    }
+  ],
+  "failures": [
+    {
+      "code": "PERMISSION_DENIED",
+      "category": "authorization",
+      "description": "The operator account is not authorized to view this record. Retrying will not help.",
+      "detect": {
+        "any_of": [
+          {
+            "by": "text",
+            "text": "You do not have permission",
+            "exact": false
+          }
+        ]
+      },
+      "retryable": false
+    },
+    {
+      "code": "INVALID_LOGIN",
+      "category": "authentication",
+      "description": "The configured credentials were rejected.",
+      "detect": {
+        "any_of": [
+          {
+            "by": "text",
+            "text": "Invalid username or password.",
+            "exact": false
+          }
+        ]
+      },
+      "retryable": false
+    },
+    {
+      "code": "APP_ERROR",
+      "category": "application",
+      "description": "The application returned an error page.",
+      "detect": {
+        "any_of": [
+          {
+            "by": "text",
+            "text": "An unexpected error occurred",
+            "exact": false
+          }
+        ]
+      },
+      "retryable": true
+    }
+  ],
+  "policy": {
+    "name": "cap_open_sub_account_review",
+    "allowlist": {
+      "origins": [
+        "http://localhost:4000"
+      ],
+      "path_patterns": [
+        "/",
+        "/login",
+        "/members/search",
+        "/members/*",
+        "/members/*/sub-accounts/new",
+        "/members/*/sub-accounts/review"
+      ],
+      "denied_path_patterns": [],
+      "action_types": [
+        "navigate",
+        "type",
+        "click",
+        "select"
+      ]
+    },
+    "risk": {
+      "mode": "confirm",
+      "risky_control_patterns": [
+        "\\bconfirm\\b",
+        "\\bapprove\\b",
+        "\\bdelete\\b",
+        "\\bremove\\b",
+        "\\btransfer\\b",
+        "\\bopen account\\b",
+        "\\bclose account\\b",
+        "\\bwire\\b",
+        "\\bpost\\b",
+        "\\bsubmit (?:transaction|payment|transfer)\\b"
+      ],
+      "risky_url_patterns": []
+    },
+    "secrets": {
+      "allowed": [
+        "TARGET_USERNAME",
+        "TARGET_PASSWORD"
+      ]
+    },
+    "redaction": {
+      "extra_patterns": []
+    }
+  },
+  "overrides": [],
+  "provenance": {
+    "discovery_run_id": "discovery-20260911T033357Z-8e8e",
+    "goal": "Open a new Checking sub-account nicknamed Bills with a 25.00 initial deposit for member 10002 and reach the review screen without confirming",
+    "models": [
+      "gemini/gemini-3.6-flash"
+    ],
+    "created_at": "2026-09-11T03:34:47.480607+00:00",
+    "created_by": "cua-discover",
+    "evidence_dir": "evidence/discovery/discovery-20260911T033357Z-8e8e"
+  }
+}

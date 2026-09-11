@@ -1,0 +1,17 @@
+{"ts": "2026-09-11T02:56:10.308308+00:00", "kind": "replay.start", "capability": "cap_lookup_member_balance", "version": "1.0.0", "inputs": {"member_id": "10001"}}
+{"ts": "2026-09-11T02:56:10.385689+00:00", "kind": "step", "step": "s1", "action": "navigate", "status": "ok", "candidate_index": null, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/login", "duration_ms": 77}
+{"ts": "2026-09-11T02:56:10.419683+00:00", "kind": "step", "step": "s2", "action": "type", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/login", "duration_ms": 33}
+{"ts": "2026-09-11T02:56:10.469506+00:00", "kind": "step", "step": "s3", "action": "type", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/login", "duration_ms": 49}
+{"ts": "2026-09-11T02:56:10.543490+00:00", "kind": "condition.recoverable", "code": "SESSION_EXPIRED", "step": "s4", "attempt": 1, "recovery": "run_phase"}
+{"ts": "2026-09-11T02:56:10.543637+00:00", "kind": "step", "step": "s4", "action": "click", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "RestartPhase", "url_after": "http://localhost:4000/members/search", "duration_ms": 74}
+{"ts": "2026-09-11T02:56:10.543685+00:00", "kind": "replay.phase_restart", "phase": "bootstrap", "restart": 1}
+{"ts": "2026-09-11T02:56:10.566720+00:00", "kind": "step", "step": "s1", "action": "navigate", "status": "ok", "candidate_index": null, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/login", "duration_ms": 22}
+{"ts": "2026-09-11T02:56:10.579211+00:00", "kind": "step", "step": "s2", "action": "type", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/login", "duration_ms": 12}
+{"ts": "2026-09-11T02:56:10.590727+00:00", "kind": "step", "step": "s3", "action": "type", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/login", "duration_ms": 11}
+{"ts": "2026-09-11T02:56:10.661307+00:00", "kind": "step", "step": "s4", "action": "click", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/members/search", "duration_ms": 70}
+{"ts": "2026-09-11T02:56:10.687308+00:00", "kind": "step", "step": "s5", "action": "navigate", "status": "ok", "candidate_index": null, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/members/search", "duration_ms": 25}
+{"ts": "2026-09-11T02:56:10.698909+00:00", "kind": "step", "step": "s6", "action": "type", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/members/search", "duration_ms": 11}
+{"ts": "2026-09-11T02:56:10.778822+00:00", "kind": "step", "step": "s7", "action": "click", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/members/10001", "duration_ms": 79}
+{"ts": "2026-09-11T02:56:10.806083+00:00", "kind": "output", "step": "s8", "name": "savings_balance", "value": "[REDACTED:savings_balance]"}
+{"ts": "2026-09-11T02:56:10.806180+00:00", "kind": "step", "step": "s8", "action": "extract", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/members/10001", "duration_ms": 27}
+{"ts": "2026-09-11T02:56:10.807773+00:00", "kind": "replay.end", "status": "success", "duration_ms": 498, "drift": false}

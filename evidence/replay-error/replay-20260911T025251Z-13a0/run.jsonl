@@ -1,0 +1,11 @@
+{"ts": "2026-09-11T02:52:51.417499+00:00", "kind": "replay.start", "capability": "cap_lookup_member_balance", "version": "1.0.0", "inputs": {"member_id": "99999"}}
+{"ts": "2026-09-11T02:52:51.462856+00:00", "kind": "step", "step": "s1", "action": "navigate", "status": "ok", "candidate_index": null, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/login", "duration_ms": 44}
+{"ts": "2026-09-11T02:52:51.484281+00:00", "kind": "step", "step": "s2", "action": "type", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/login", "duration_ms": 21}
+{"ts": "2026-09-11T02:52:51.521153+00:00", "kind": "step", "step": "s3", "action": "type", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/login", "duration_ms": 36}
+{"ts": "2026-09-11T02:52:51.594572+00:00", "kind": "step", "step": "s4", "action": "click", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/members/search", "duration_ms": 73}
+{"ts": "2026-09-11T02:52:51.618833+00:00", "kind": "step", "step": "s5", "action": "navigate", "status": "ok", "candidate_index": null, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/members/search", "duration_ms": 24}
+{"ts": "2026-09-11T02:52:51.633276+00:00", "kind": "step", "step": "s6", "action": "type", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "", "url_after": "http://localhost:4000/members/search", "duration_ms": 14}
+{"ts": "2026-09-11T02:52:51.705269+00:00", "kind": "condition.outcome", "code": "MEMBER_NOT_FOUND", "step": "s7", "terminal": true}
+{"ts": "2026-09-11T02:52:51.705388+00:00", "kind": "step", "step": "s7", "action": "click", "status": "ok", "candidate_index": 0, "used_fallback": false, "detail": "BusinessOutcome", "url_after": "http://localhost:4000/members/search", "duration_ms": 72}
+{"ts": "2026-09-11T02:52:51.734863+00:00", "kind": "replay.outcome", "code": "MEMBER_NOT_FOUND", "step": "s7", "screenshot": "screenshots/outcome-MEMBER_NOT_FOUND.png"}
+{"ts": "2026-09-11T02:52:51.735446+00:00", "kind": "replay.end", "status": "business_outcome", "duration_ms": 317, "drift": false}
