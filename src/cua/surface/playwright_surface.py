@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any, cast
 
 from playwright.sync_api import Browser, BrowserContext, Dialog, Page, Playwright, sync_playwright
@@ -24,7 +26,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from cua.artifact.targets import BBox, Locator, RecordedElement, TargetDescriptor
 
-from .base import Handle, Observation, ReadAttribute, Surface, TargetNotFound, UnknownRef
+from .base import ActionFailed, Handle, Observation, ReadAttribute, Surface, TargetNotFound, UnknownRef
 from .snapshot import parse_refs
 
 log = logging.getLogger(__name__)
@@ -165,8 +167,9 @@ class PlaywrightSurface(Surface):
 
     def describe(self, handle: Handle) -> RecordedElement:
         pl = self._native(handle)
-        info = cast(dict[str, Any], pl.evaluate(_DESCRIBE_JS))
-        box = pl.bounding_box()
+        with self._action(f"describe {handle.candidate.describe()}"):
+            info = cast(dict[str, Any], pl.evaluate(_DESCRIBE_JS))
+            box = pl.bounding_box()
         role = handle.candidate.role
         name = handle.candidate.name
         if handle.ref is not None and handle.ref in self._last_elements:
@@ -248,42 +251,57 @@ class PlaywrightSurface(Surface):
 
     def _native(self, handle: Handle) -> PWLocator:
         if handle.native is None:
-            raise ValueError("handle has no native locator (bbox-only handles support click only)")
+            raise ActionFailed("handle has no native locator (bbox-only handles support click only)")
         return cast(PWLocator, handle.native)
+
+    @contextmanager
+    def _action(self, description: str) -> Iterator[None]:
+        """Translate driver exceptions into the surface contract's ActionFailed."""
+        try:
+            yield
+        except PlaywrightError as ex:
+            first_line = str(ex).splitlines()[0][:200] if str(ex) else type(ex).__name__
+            raise ActionFailed(f"{description}: {first_line}") from ex
 
     # ----------------------------------------------------------------- action
     def navigate(self, url: str) -> None:
-        self.page.goto(url, wait_until="domcontentloaded")
+        with self._action(f"navigate {url}"):
+            self.page.goto(url, wait_until="domcontentloaded")
 
     def click(self, handle: Handle) -> None:
-        if handle.native is None and handle.bbox is not None:
-            cx, cy = handle.bbox.center
-            self.page.mouse.click(cx, cy)
-            # Unlike Locator.click(), a coordinate click does not auto-wait for a
-            # navigation it triggers; give one a moment to start before settling.
-            self.page.wait_for_timeout(250)
-        else:
-            self._native(handle).click()
+        with self._action(f"click {handle.candidate.describe()}"):
+            if handle.native is None and handle.bbox is not None:
+                cx, cy = handle.bbox.center
+                self.page.mouse.click(cx, cy)
+                # Unlike Locator.click(), a coordinate click does not auto-wait for a
+                # navigation it triggers; give one a moment to start before settling.
+                self.page.wait_for_timeout(250)
+            else:
+                self._native(handle).click()
         self.settle()
 
     def type_text(self, handle: Handle, text: str) -> None:
-        self._native(handle).fill(text)
+        with self._action(f"type into {handle.candidate.describe()}"):
+            self._native(handle).fill(text)
 
     def select_option(self, handle: Handle, label: str) -> None:
-        self._native(handle).select_option(label=label)
+        with self._action(f"select {label!r} in {handle.candidate.describe()}"):
+            self._native(handle).select_option(label=label)
 
     def press(self, key: str) -> None:
-        self.page.keyboard.press(key)
+        with self._action(f"press {key}"):
+            self.page.keyboard.press(key)
         self.settle()
 
     def read(self, handle: Handle, attribute: ReadAttribute = "text") -> str:
-        pl = self._native(handle)
-        if attribute == "value":
-            return pl.input_value()
-        tag = cast(str, pl.evaluate("el => el.tagName.toLowerCase()"))
-        if tag in ("input", "select", "textarea"):
-            return pl.input_value()
-        return pl.inner_text().strip()
+        with self._action(f"read {handle.candidate.describe()}"):
+            pl = self._native(handle)
+            if attribute == "value":
+                return pl.input_value()
+            tag = cast(str, pl.evaluate("el => el.tagName.toLowerCase()"))
+            if tag in ("input", "select", "textarea"):
+                return pl.input_value()
+            return pl.inner_text().strip()
 
     def settle(self, timeout_ms: int | None = None) -> None:
         try:

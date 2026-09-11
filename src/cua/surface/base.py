@@ -76,6 +76,10 @@ class UnknownRef(SurfaceError):
         self.ref = ref
 
 
+class ActionFailed(SurfaceError):
+    """The driver could not perform an action (element not editable, detached, navigation blocked...)."""
+
+
 class TargetNotFound(SurfaceError):
     def __init__(self, target: TargetDescriptor, attempts: list[str]) -> None:
         tried = "; ".join(attempts) or "no candidates"
