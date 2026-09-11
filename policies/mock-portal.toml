@@ -1,0 +1,25 @@
+# Environment policy for the local mock credit-union portal.
+# Loaded by the discovery and replay CLIs; intersected with the policy each
+# artifact declares for itself. `${VAR}` in origins is expanded from the environment.
+
+name = "mock-portal"
+
+[allowlist]
+origins = ["${TARGET_APP_URL}", "http://localhost:4000", "http://127.0.0.1:4000"]
+path_patterns = ["/", "/login", "/logout", "/members/**", "/notice/**"]
+# The mock app's fault-injection fixture is off-limits to the agent, always.
+denied_path_patterns = ["/__admin/**"]
+action_types = ["navigate", "click", "type", "select", "press", "extract"]
+
+[risk]
+# block | confirm | allow. "confirm" routes risky actions to a human (or an explicit
+# pre-approval on the replay call) instead of executing them unattended.
+mode = "confirm"
+risky_url_patterns = ["/**/confirm"]
+# risky_control_patterns defaults to the built-in list (confirm, approve, delete, transfer, ...).
+
+[secrets]
+allowed = ["TARGET_USERNAME", "TARGET_PASSWORD"]
+
+[redaction]
+extra_patterns = []
