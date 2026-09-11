@@ -28,6 +28,9 @@ FAULT_KINDS: tuple[FaultKind, ...] = (
 
 #: Paths the injector never touches, so recovery flows (re-login, dismissing a notice) stay deterministic.
 _EXEMPT_PREFIXES = ("/__admin", "/notice", "/login", "/logout")
+#: Browser-initiated asset requests are not pages. A headed Chromium fetches /favicon.ico while
+#: rendering the login page, which must not consume a one-shot fault armed for the next page.
+_ASSET_SUFFIXES = (".ico", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".css", ".js", ".map", ".woff", ".woff2")
 
 
 @dataclass
@@ -69,6 +72,8 @@ faults = FaultInjector()
 
 
 def is_exempt_path(path: str) -> bool:
+    if path.lower().endswith(_ASSET_SUFFIXES):
+        return True
     return any(path == p or path.startswith(f"{p}/") for p in _EXEMPT_PREFIXES)
 
 

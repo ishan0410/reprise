@@ -190,5 +190,16 @@ def test_faults_never_fire_on_exempt_routes(client: FlaskClient) -> None:
     assert armed and armed[0]["kind"] == "app_error"  # still armed for the next real request
 
 
+def test_faults_never_fire_on_browser_asset_requests(client: FlaskClient) -> None:
+    # A headed Chromium fetches /favicon.ico while rendering the login page. That request must not
+    # consume a one-shot fault armed for the next page in the flow (it did, and the escalation demo
+    # then ran to completion without ever escalating).
+    login(client)
+    client.post("/__admin/inject", json={"kind": "unexpected_dialog"})
+    client.get("/favicon.ico")
+    assert client.get("/__admin/faults").get_json()["faults"][0]["kind"] == "unexpected_dialog"
+    assert b"Security Notice" in client.get("/members/10001").data
+
+
 def test_unknown_fault_kind_rejected(client: FlaskClient) -> None:
     assert client.post("/__admin/inject", json={"kind": "nope"}).status_code == 400
