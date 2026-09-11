@@ -1,8 +1,10 @@
-# Rote
+# Reprise
 
-*Learn it once, do it by rote.* A computer-use automation system for legacy back-office applications.
+*A model performs the task once. Every run after is a reprise.* A computer-use automation system for legacy back-office applications.
 
 An LLM figures out how to accomplish a task in a legacy back-office web app **once**. The successful run is compiled into a typed, versioned **capability artifact**. From then on, AI agents invoke that capability through a **deterministic replay engine** that never consults a model, classifies what the application says into *business outcomes*, *recoverable conditions*, and *hard failures*, and hands the live browser to a **human operator** when it cannot safely proceed.
+
+**Why the name.** A reprise is a passage performed again exactly as written. In French the same word means a resumption, and taking back control. All three happen here: the model's first run is compiled into an artifact, the replay engine reprises it without a model, and when it cannot safely continue a human takes the session, hands it back, and the run resumes.
 
 Built for the interface.ai take-home. The design write-up is in [REPORT.md](REPORT.md); recorded runs are in [evidence/](evidence/). The Python package and CLI prefix are `cua` (computer-use automation).
 
