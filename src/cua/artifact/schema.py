@@ -178,7 +178,7 @@ class FailurePattern(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     code: str
-    category: Literal["authorization", "authentication", "application", "validation", "other"] = "other"
+    category: Literal["authorization", "authentication", "application", "validation"] = "application"
     description: str = ""
     detect: Detection
     retryable: bool = False

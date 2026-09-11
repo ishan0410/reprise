@@ -127,6 +127,9 @@ class PlaywrightSurface(Surface):
     def url(self) -> str:
         return self.page.url
 
+    def title(self) -> str:
+        return self.page.title()
+
     def _on_dialog(self, dialog: Dialog) -> None:
         self._dialogs.append(f"{dialog.type}: {dialog.message}")
         dialog.dismiss()

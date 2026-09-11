@@ -18,7 +18,7 @@
       "code": "VALIDATION_ERROR",
       "description": "A form field was rejected by the application's own validation.",
       "detect": { "any_of": [
-        { "by": "text", "text": "is required." },
+        { "by": "text", "text": "Nickname is required." },
         { "by": "text", "text": "must be 40 characters or fewer." },
         { "by": "text", "text": "Initial deposit must be a number" },
         { "by": "text", "text": "Select a valid account type." }

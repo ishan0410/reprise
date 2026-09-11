@@ -101,6 +101,9 @@ class Surface(ABC):
     @abstractmethod
     def url(self) -> str: ...
 
+    @abstractmethod
+    def title(self) -> str: ...
+
     # ------------------------------------------------------------- perception
     @abstractmethod
     def observe(self) -> Observation: ...
