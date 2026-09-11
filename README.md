@@ -1,8 +1,10 @@
-# Computer-use automation system
+# Rote
+
+*Learn it once, do it by rote.* A computer-use automation system for legacy back-office applications.
 
 An LLM figures out how to accomplish a task in a legacy back-office web app **once**. The successful run is compiled into a typed, versioned **capability artifact**. From then on, AI agents invoke that capability through a **deterministic replay engine** that never consults a model, classifies what the application says into *business outcomes*, *recoverable conditions*, and *hard failures*, and hands the live browser to a **human operator** when it cannot safely proceed.
 
-Built for the interface.ai take-home. The design write-up is in [REPORT.md](REPORT.md); recorded runs are in [evidence/](evidence/).
+Built for the interface.ai take-home. The design write-up is in [REPORT.md](REPORT.md); recorded runs are in [evidence/](evidence/). The Python package and CLI prefix are `cua` (computer-use automation).
 
 ```
 goal ──▶ DISCOVERY (LLM: observe → decide → act) ──▶ trace ──▶ BUILDER ──▶ capability artifact (JSON)
