@@ -10,7 +10,7 @@ from google.genai import errors, types
 
 from cua.agent.llm import LLMProvider, ModelRequest, ModelTurn, ProviderBusy, ProviderError, ToolCall
 
-DEFAULT_MODEL = "gemini-2.5-flash"
+DEFAULT_MODEL = "gemini-3.6-flash"
 
 
 class GeminiProvider(LLMProvider):

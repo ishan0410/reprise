@@ -64,7 +64,7 @@ Everything is read from the environment (a `.env` file is loaded automatically).
 
 | Variable | Purpose |
 |---|---|
-| `GEMINI_API_KEY`, `GEMINI_MODEL` | Primary discovery model (default `gemini-2.5-flash`; needs vision + function calling). |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | Primary discovery model (default `gemini-3.6-flash`; needs vision + function calling). |
 | `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_VISION` | Fallback used automatically when Gemini returns 429/503. Set `GROQ_VISION=1` only for a vision-capable Groq model; otherwise the model reasons over the accessibility tree alone. |
 | `TARGET_APP_PORT`, `TARGET_APP_URL` | Where the mock app listens / where the automation points. |
 | `TARGET_USERNAME`, `TARGET_PASSWORD` | Demo-only fixture credentials for the mock app (`teller1` / `demo-pass-2024`). The model, the artifact and the logs only ever see `{{secret:TARGET_USERNAME}}` / `{{secret:TARGET_PASSWORD}}`. |

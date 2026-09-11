@@ -11,7 +11,7 @@ from groq import APIConnectionError, APIStatusError, Groq, RateLimitError
 
 from cua.agent.llm import LLMProvider, ModelRequest, ModelTurn, ProviderBusy, ProviderError, ToolCall
 
-DEFAULT_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_MODEL = "openai/gpt-oss-120b"
 
 
 class GroqProvider(LLMProvider):

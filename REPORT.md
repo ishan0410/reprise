@@ -59,7 +59,7 @@ An artifact is a capability contract with a recorded implementation, read in the
   "failures":     [ { "code": "PERMISSION_DENIED", "category": "authorization", "detect": { "…" }, "retryable": false } ],
   "policy": { "allowlist": { "origins": ["http://127.0.0.1:4000"], "path_patterns": ["/", "/login", "/members/search", "/members/*"],
               "action_types": ["navigate", "type", "click", "extract"] }, "risk": { "mode": "confirm" }, "secrets": { "allowed": ["TARGET_USERNAME", "TARGET_PASSWORD"] } },
-  "provenance": { "discovery_run_id": "discovery-…", "models": ["gemini/gemini-2.5-flash"], "evidence_dir": "evidence/discovery/…", "reviewed_by": null } }
+  "provenance": { "discovery_run_id": "discovery-…", "models": ["gemini/gemini-3.6-flash"], "evidence_dir": "evidence/discovery/…", "reviewed_by": null } }
 ```
 
 Why it is shaped this way:
