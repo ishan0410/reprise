@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from cua.artifact.targets import BBox, Locator, RecordedElement, TargetDescriptor
+from cua.escalation.session import SessionControl
 
 ReadAttribute = Literal["text", "value"]
 
@@ -91,6 +92,9 @@ class TargetNotFound(SurfaceError):
 class Surface(ABC):
     """Perception + action for one live session of one application surface."""
 
+    #: Who holds the session. Action methods must refuse to act while a human holds it.
+    control: SessionControl
+
     # ---------------------------------------------------------------- session
     @abstractmethod
     def open(self) -> None: ...
@@ -150,3 +154,20 @@ class Surface(ABC):
     @abstractmethod
     def settle(self, timeout_ms: int | None = None) -> None:
         """Wait for any in-flight navigation/load to finish. No-op if the page is idle."""
+
+    @abstractmethod
+    def wait_idle(self, ms: int) -> None:
+        """Sleep while letting the driver deliver events (dialogs, human-action callbacks)."""
+
+    # ---------------------------------------------------------------- handoff
+    @abstractmethod
+    def start_human_recording(self) -> None:
+        """Begin capturing what a human does in the live session."""
+
+    @abstractmethod
+    def stop_human_recording(self) -> list[dict[str, Any]]:
+        """Stop capturing and return the recorded actions (control + action kind; never typed values)."""
+
+    @abstractmethod
+    def set_banner(self, text: str | None) -> None:
+        """Show (or clear, with None) an on-surface notice saying who is in control."""

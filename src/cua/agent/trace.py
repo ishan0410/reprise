@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from cua.artifact.actions import ActionIntent
 from cua.artifact.targets import RecordedElement
+from cua.escalation.session import ControlEvent
 from cua.policy.gate import Decision
 
 RunStatus = Literal["success", "stuck", "max_steps", "timeout", "error"]
@@ -86,3 +87,4 @@ class Trace(BaseModel):
     started_at: str = ""
     finished_at: str = ""
     provider_events: list[ProviderEvent] = Field(default_factory=list)
+    control_events: list[ControlEvent] = Field(default_factory=list)

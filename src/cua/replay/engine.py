@@ -35,6 +35,7 @@ from cua.artifact.schema import (
 )
 from cua.artifact.values import UnknownInput, render_inputs
 from cua.escalation.base import EscalationHandler, InterventionOutcome, InterventionRequest
+from cua.escalation.session import ControlViolation
 from cua.evidence.recorder import RunRecorder
 from cua.policy.gate import PolicyGate
 from cua.policy.model import Policy, glob_to_regex
@@ -42,7 +43,6 @@ from cua.policy.redaction import Redactor
 from cua.policy.secrets import SecretError, SecretStore
 from cua.replay.inputs import InputValidationError, parse_output, validate_inputs
 from cua.replay.result import (
-    ControlEvent,
     DriftReport,
     OutcomeReport,
     RecoveryReport,
@@ -119,7 +119,6 @@ class ReplayEngine:
         self.outputs_raw: dict[str, str] = {}
         self.steps: list[StepReport] = []
         self.recoveries: list[RecoveryReport] = []
-        self.control_events: list[ControlEvent] = []
         self._recovery_attempts: Counter[str] = Counter()
         self._failure_retries: Counter[str] = Counter()
         self._interventions: Counter[str] = Counter()
@@ -129,7 +128,8 @@ class ReplayEngine:
         started = time.monotonic()
         started_at = datetime.now(UTC).isoformat()
         self.artifact = artifact
-        self.steps, self.recoveries, self.control_events = [], [], []
+        self.steps, self.recoveries = [], []
+        self.surface.control.events.clear()
         self.outputs_raw = {}
         self._recovery_attempts.clear()
         self._failure_retries.clear()
@@ -165,6 +165,10 @@ class ReplayEngine:
             self.outputs_raw.update(bo.outcome.sets)
             shot = self.recorder.screenshot(self.surface.screenshot(), f"outcome-{bo.outcome.code}", force=True)
             self.recorder.event("replay.outcome", code=bo.outcome.code, step=bo.step.id, screenshot=shot)
+        except ControlViolation as cv:
+            status = "failure"
+            error = ReplayError(code="CONTROL_VIOLATION", category="internal", message=str(cv))
+            self.recorder.event("replay.failure", **error.model_dump())
         except _Failure as f:
             status = "failure"
             error = f.error
@@ -197,7 +201,7 @@ class ReplayEngine:
                     if s.used_fallback
                 ]
             ),
-            control_events=list(self.control_events),
+            control_events=list(self.surface.control.events),
             started_at=started_at,
             finished_at=datetime.now(UTC).isoformat(),
             duration_ms=int((time.monotonic() - started) * 1000),
@@ -628,20 +632,14 @@ class ReplayEngine:
             screenshot=shot,
             extra={"expected": error.expected, "observed": error.observed},
         )
-        self._control("automation", "paused", f"{error.code} at {step.id}: {error.message}")
         self.recorder.event("escalation.requested", **request.__dict__)
+        # The handler owns the control transfer: it cedes the session, records the human's
+        # actions, and returns it. The ledger on the surface is what ends up in the result.
         outcome = self.escalate.intervene(request)
-        self._control("human", "took_control", f"operator={outcome.operator}", at=outcome.started_at)
-        for entry in outcome.control_log:
-            self.control_events.append(ControlEvent(at=str(entry.get("at", "")), holder="human", event="action", detail=str(entry.get("detail", entry))))
-        self._control("automation", "resumed", f"resolution={outcome.resolution}; {outcome.notes}", at=outcome.ended_at)
-        self.recorder.event("escalation.resolved", step=step.id, resolution=outcome.resolution, operator=outcome.operator, notes=outcome.notes)
-        return outcome
-
-    def _control(self, holder: str, event: str, detail: str, at: str | None = None) -> None:
-        self.control_events.append(
-            ControlEvent(at=at or datetime.now(UTC).isoformat(), holder=holder, event=event, detail=detail)  # type: ignore[arg-type]
+        self.recorder.event(
+            "escalation.resolved", step=step.id, resolution=outcome.resolution, operator=outcome.operator, notes=outcome.notes
         )
+        return outcome
 
     # --------------------------------------------------------------- helpers
     def _render(self, template: str) -> str:

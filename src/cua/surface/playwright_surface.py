@@ -25,6 +25,7 @@ from playwright.sync_api import Locator as PWLocator
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from cua.artifact.targets import BBox, Locator, RecordedElement, TargetDescriptor
+from cua.escalation.session import SessionControl
 
 from .base import ActionFailed, Handle, Observation, ReadAttribute, Surface, TargetNotFound, UnknownRef
 from .snapshot import parse_refs
@@ -82,6 +83,71 @@ el => {
 """
 
 
+_INIT_JS = """
+(() => {
+  if (window.__cuaInstalled) return;
+  window.__cuaInstalled = true;
+  const implicitRole = (el) => {
+    const tag = el.tagName.toLowerCase();
+    if (tag === 'a') return 'link';
+    if (tag === 'button') return 'button';
+    if (tag === 'select') return 'combobox';
+    if (tag === 'textarea') return 'textbox';
+    if (tag === 'input') return ({submit:'button', button:'button', reset:'button', checkbox:'checkbox', radio:'radio'})[el.type] || 'textbox';
+    return el.getAttribute('role') || tag;
+  };
+  const describe = (el) => {
+    if (!el || el.nodeType !== 1) return {tag: 'document'};
+    const tag = el.tagName.toLowerCase();
+    const isBtn = tag === 'input' && (el.type === 'submit' || el.type === 'button');
+    const name = el.getAttribute('aria-label') || el.getAttribute('title') || (isBtn ? el.value : '')
+      || (tag === 'select' || tag === 'input' || tag === 'textarea' ? '' : (el.innerText || '').trim().slice(0, 80))
+      || el.getAttribute('name') || '';
+    return {tag, role: implicitRole(el), name, field: el.getAttribute('name') || undefined};
+  };
+  const send = (kind, el, extra) => {
+    try { window.__cuaHumanAction(Object.assign({kind, url: location.href}, describe(el), extra || {})); } catch (e) {}
+  };
+  document.addEventListener('click', (e) => {
+    const el = e.target && e.target.closest ? (e.target.closest('a,button,input,select,label,[role]') || e.target) : e.target;
+    send('click', el);
+  }, true);
+  document.addEventListener('change', (e) => {
+    const el = e.target;
+    if (el.tagName === 'SELECT') {
+      const opt = el.options[el.selectedIndex];
+      send('change', el, {option: opt ? opt.label : ''});
+    } else {
+      send('change', el, {value_length: (el.value || '').length});
+    }
+  }, true);
+  document.addEventListener('submit', (e) => send('submit', e.target), true);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === 'Escape') send('key', e.target, {key: e.key});
+  }, true);
+  const renderBanner = async () => {
+    let text = '';
+    try { text = await window.__cuaBannerText(); } catch (e) { return; }
+    window.__cuaSetBanner(text);
+  };
+  window.__cuaSetBanner = (text) => {
+    let el = document.getElementById('__cua_banner');
+    if (!text) { if (el) el.remove(); return; }
+    if (!el) {
+      el = document.createElement('div');
+      el.id = '__cua_banner';
+      el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#b30000;color:#fff;'
+        + 'font:bold 14px/1.4 Verdana,Arial,sans-serif;padding:8px 14px;box-shadow:0 2px 6px rgba(0,0,0,.4)';
+      (document.body || document.documentElement).appendChild(el);
+    }
+    el.textContent = text;
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', renderBanner);
+  else renderBanner();
+})();
+"""
+
+
 class PlaywrightSurface(Surface):
     def __init__(
         self,
@@ -90,7 +156,9 @@ class PlaywrightSurface(Surface):
         viewport: dict[str, int] | None = None,
         default_timeout_ms: int = 10_000,
         slow_mo_ms: int = 0,
+        control: SessionControl | None = None,
     ) -> None:
+        self.control = control or SessionControl()
         self.headless = headless
         self.viewport = viewport or dict(DEFAULT_VIEWPORT)
         self.default_timeout_ms = default_timeout_ms
@@ -101,6 +169,9 @@ class PlaywrightSurface(Surface):
         self._page: Page | None = None
         self._last_elements: dict[str, Any] = {}
         self._dialogs: list[str] = []
+        self._recording = False
+        self._human_actions: list[dict[str, Any]] = []
+        self._banner_text: str | None = None
 
     # ---------------------------------------------------------------- session
     def open(self) -> None:
@@ -108,8 +179,13 @@ class PlaywrightSurface(Surface):
         self._browser = self._pw.chromium.launch(headless=self.headless, slow_mo=self.slow_mo_ms or None)
         self._context = self._browser.new_context(viewport=cast(Any, self.viewport))
         self._context.set_default_timeout(self.default_timeout_ms)
+        # Installed before the first page so every document (including after navigation) gets them.
+        self._context.expose_binding("__cuaHumanAction", self._on_human_action)
+        self._context.expose_binding("__cuaBannerText", lambda _source: self._banner_text or "")
+        self._context.add_init_script(_INIT_JS)
         self._page = self._context.new_page()
         self._page.on("dialog", self._on_dialog)
+        self._page.on("framenavigated", self._on_navigated)
 
     def close(self) -> None:
         if self._browser is not None:
@@ -133,6 +209,14 @@ class PlaywrightSurface(Surface):
     def _on_dialog(self, dialog: Dialog) -> None:
         self._dialogs.append(f"{dialog.type}: {dialog.message}")
         dialog.dismiss()
+
+    def _on_human_action(self, _source: Any, payload: Any) -> None:
+        if self._recording and isinstance(payload, dict):
+            self._human_actions.append({k: v for k, v in payload.items() if v not in (None, "")})
+
+    def _on_navigated(self, frame: Any) -> None:
+        if self._recording and self._page is not None and frame == self._page.main_frame:
+            self._human_actions.append({"kind": "navigated", "url": frame.url})
 
     # ------------------------------------------------------------- perception
     def observe(self) -> Observation:
@@ -259,7 +343,8 @@ class PlaywrightSurface(Surface):
 
     @contextmanager
     def _action(self, description: str) -> Iterator[None]:
-        """Translate driver exceptions into the surface contract's ActionFailed."""
+        """Refuse to act while a human holds the session; translate driver exceptions into ActionFailed."""
+        self.control.assert_automation(description)
         try:
             yield
         except PlaywrightError as ex:
@@ -313,3 +398,23 @@ class PlaywrightSurface(Surface):
             # Not an error by itself: a page that never reaches "load" surfaces through
             # the next observe()/resolve(), which is where the replay engine classifies it.
             log.debug("settle: page did not reach 'load' within %sms", timeout_ms or self.default_timeout_ms)
+
+    def wait_idle(self, ms: int) -> None:
+        self.page.wait_for_timeout(ms)
+
+    # ---------------------------------------------------------------- handoff
+    def start_human_recording(self) -> None:
+        self._human_actions = []
+        self._recording = True
+
+    def stop_human_recording(self) -> list[dict[str, Any]]:
+        self._recording = False
+        actions, self._human_actions = self._human_actions, []
+        return actions
+
+    def set_banner(self, text: str | None) -> None:
+        self._banner_text = text
+        try:
+            self.page.evaluate("t => window.__cuaSetBanner && window.__cuaSetBanner(t)", text or "")
+        except PlaywrightError as ex:
+            raise ActionFailed(f"banner: {str(ex).splitlines()[0][:120]}") from ex

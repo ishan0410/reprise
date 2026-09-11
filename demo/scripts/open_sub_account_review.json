@@ -1,0 +1,23 @@
+[
+  {"tool": "type", "reason": "Enter the staff username to sign in",
+   "arguments": {"element": {"role": "textbox", "name": "Username"}, "text": "{{secret:TARGET_USERNAME}}"}},
+  {"tool": "type", "reason": "Enter the staff password",
+   "arguments": {"element": {"role": "textbox", "name": "Password"}, "text": "{{secret:TARGET_PASSWORD}}"}},
+  {"tool": "click", "reason": "Submit the sign-in form",
+   "arguments": {"element": {"role": "button", "name": "Sign In"}}},
+  {"tool": "type", "reason": "Enter the member ID",
+   "arguments": {"element": {"role": "textbox", "name": "Member ID"}, "text": "{{input:member_id}}"}},
+  {"tool": "click", "reason": "Open the member's record",
+   "arguments": {"element": {"role": "button", "name": "Search"}}},
+  {"tool": "click", "reason": "Start the new sub-account flow",
+   "arguments": {"element": {"role": "link", "name": "Open Sub-Account"}}},
+  {"tool": "select", "reason": "Choose the account type",
+   "arguments": {"element": {"role": "combobox", "name": "Account Type"}, "option": "{{input:account_type}}"}},
+  {"tool": "type", "reason": "Give the account a nickname",
+   "arguments": {"element": {"role": "textbox", "name": "Nickname"}, "text": "{{input:nickname}}"}},
+  {"tool": "type", "reason": "Enter the initial deposit",
+   "arguments": {"element": {"role": "textbox", "name": "Initial Deposit"}, "text": "{{input:initial_deposit}}"}},
+  {"tool": "click", "reason": "Go to the review screen without committing",
+   "arguments": {"element": {"role": "button", "name": "Review"}}},
+  {"tool": "done", "arguments": {"summary": "Filled the sub-account form and reached the review screen; did not confirm."}}
+]

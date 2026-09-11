@@ -1,0 +1,15 @@
+[
+  {"tool": "type", "reason": "Enter the staff username to sign in",
+   "arguments": {"element": {"role": "textbox", "name": "Username"}, "text": "{{secret:TARGET_USERNAME}}"}},
+  {"tool": "type", "reason": "Enter the staff password",
+   "arguments": {"element": {"role": "textbox", "name": "Password"}, "text": "{{secret:TARGET_PASSWORD}}"}},
+  {"tool": "click", "reason": "Submit the sign-in form",
+   "arguments": {"element": {"role": "button", "name": "Sign In"}}},
+  {"tool": "type", "reason": "Enter the member ID to look up",
+   "arguments": {"element": {"role": "textbox", "name": "Member ID"}, "text": "{{input:member_id}}"}},
+  {"tool": "click", "reason": "Run the member search",
+   "arguments": {"element": {"role": "button", "name": "Search"}}},
+  {"tool": "extract", "reason": "Read the balance shown in the Savings row",
+   "arguments": {"element": {"role": "cell", "name": "$4,210.55"}, "name": "savings_balance", "sensitive": true}},
+  {"tool": "done", "arguments": {"summary": "Looked up the member and read the current savings balance."}}
+]

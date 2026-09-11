@@ -301,6 +301,9 @@ def _step_from_trace(
         )
     if action == "press":
         return Step(id=step_id, phase=phase, action=action, description=description, key=str(ts.arguments.get("key", "")), risk=risk)  # type: ignore[arg-type]
+    if ts.element is None and ts.intent is not None and ts.intent.control_role:
+        # Performed by a human during a handoff: only what the observation told us survives.
+        ts.element = RecordedElement(role=ts.intent.control_role, name=ts.intent.control_name)
     if ts.element is None:
         raise ValueError(f"trace step {ts.index} ({ts.tool}) has no recorded element")
     if action == "extract":

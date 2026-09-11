@@ -17,6 +17,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from cua.artifact.store import load_artifact
+from cua.escalation.handoff import HeadedBrowserHandoff
 from cua.evidence.recorder import RunRecorder, ScreenshotMode
 from cua.policy.model import Policy
 from cua.policy.redaction import Redactor
@@ -47,6 +48,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--allow-risky", action="store_true", help="pre-approve risky steps for this invocation")
     p.add_argument("--require-approved", action="store_true", help="refuse artifacts that are not approved")
     p.add_argument("--headed", action="store_true")
+    p.add_argument(
+        "--escalate",
+        action="store_true",
+        help="on a condition replay cannot handle, pause and hand the live browser to a human (implies --headed)",
+    )
+    p.add_argument("--escalation-timeout", type=float, default=600.0, help="seconds to wait for cua-resume")
     p.add_argument("--evidence-dir", type=Path, default=Path("evidence/replay"))
     p.add_argument("--screenshots", choices=["full", "on_failure", "none"], default="on_failure")
     p.add_argument("--show-sensitive", action="store_true", help="print sensitive outputs in the clear")
@@ -69,11 +76,23 @@ def main(argv: list[str] | None = None) -> int:
         base_url=args.base_url or os.environ.get("TARGET_APP_URL") or None,
         tenant=args.tenant,
     )
-    surface = PlaywrightSurface(headless=not args.headed, viewport=artifact.target.viewport)
+    headed = args.headed or args.escalate
+    surface = PlaywrightSurface(headless=not headed, viewport=artifact.target.viewport)
     surface.open()
     try:
+        handoff = None
+        if args.escalate:
+            handoff = HeadedBrowserHandoff(
+                surface=surface, control=surface.control, recorder=recorder, timeout_s=args.escalation_timeout
+            )
         engine = ReplayEngine(
-            surface=surface, env_policy=policy, secrets=secrets, recorder=recorder, redactor=redactor, options=options
+            surface=surface,
+            env_policy=policy,
+            secrets=secrets,
+            recorder=recorder,
+            redactor=redactor,
+            options=options,
+            escalate=handoff,
         )
         result = engine.run(artifact, _kv(args.input))
     finally:
@@ -103,6 +122,10 @@ def main(argv: list[str] | None = None) -> int:
             print("recoveries: " + "; ".join(f"{r.code}@{r.step_id} ({r.action})" for r in result.recoveries))
         if result.drift.detected:
             print("drift     : " + "; ".join(f"{d['step_id']} via candidate {d['candidate_index']}" for d in result.drift.fallback_steps))
+        if result.control_events:
+            print("control   :")
+            for ev in result.control_events:
+                print(f"  {ev.at}  {ev.holder:<10} {ev.event:<13} {ev.detail}")
         print(f"evidence  : {recorder.dir}")
     return EXIT[result.status]
 

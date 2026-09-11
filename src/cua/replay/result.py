@@ -15,6 +15,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from cua.escalation.session import ControlEvent
+
 ReplayStatus = Literal["success", "business_outcome", "failure"]
 ErrorCategory = Literal[
     "input",  # caller supplied bad parameters
@@ -93,17 +95,6 @@ class DriftReport(BaseModel):
         return bool(self.fallback_steps)
 
 
-class ControlEvent(BaseModel):
-    """Who had control of the live session, and when. Populated by the escalation handler."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    at: str
-    holder: Literal["automation", "human"]
-    event: str
-    detail: str = ""
-
-
 class ReplayResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -121,6 +112,7 @@ class ReplayResult(BaseModel):
     steps: list[StepReport] = Field(default_factory=list)
     recoveries: list[RecoveryReport] = Field(default_factory=list)
     drift: DriftReport = Field(default_factory=DriftReport)
+    #: Who held the live session, and when. Non-empty only if a human was brought in.
     control_events: list[ControlEvent] = Field(default_factory=list)
     started_at: str = ""
     finished_at: str = ""

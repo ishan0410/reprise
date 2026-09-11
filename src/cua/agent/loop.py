@@ -46,6 +46,8 @@ class ConfirmationResult:
     approved: bool
     by: str
     note: str = ""
+    #: The operator carried out the risky action by hand during the handoff; do not repeat it.
+    performed_by_human: bool = False
 
 
 class ConfirmationHandler(ABC):
@@ -107,6 +109,7 @@ class DiscoveryAgent:
         self.recorder.event(
             "discovery.start", goal=request.goal, start_url=request.start_url, capability=request.capability_name
         )
+        self.surface.control.events.clear()  # a run's control history belongs to that run
         history: list[str] = []
         deadline = time.monotonic() + request.timeout_s
 
@@ -265,6 +268,13 @@ class DiscoveryAgent:
             self.recorder.event(
                 "policy.confirmation", step=step.index, intent=intent, approved=outcome.approved, by=outcome.by, note=outcome.note
             )
+            if outcome.performed_by_human:
+                # Recorded as a successful step (so the artifact keeps it, as a risky step) but
+                # the element is gone from the page, so no metadata beyond the intent is captured.
+                detail = f"performed manually by {outcome.by} during handoff ({outcome.note})"
+                step.result = StepResult(status="ok", detail=detail)
+                history.append(f"{n}. {self._describe_call(call)} -> {detail}")
+                return False
             if not outcome.approved:
                 detail = f"risky action not confirmed ({outcome.by}: {outcome.note})"
                 step.result = StepResult(status="refused", detail=detail)
@@ -361,6 +371,7 @@ class DiscoveryAgent:
 
     def _finish(self, trace: Trace) -> Trace:
         trace.provider_events = list(self._provider_events)
+        trace.control_events = list(self.surface.control.events)
         trace.final_url = self.surface.url()
         try:
             trace.final_title = self.surface.observe().title

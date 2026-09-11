@@ -22,6 +22,8 @@ from cua.agent.loop import DiscoveryAgent, DiscoveryRequest
 from cua.artifact.builder import build_artifact
 from cua.artifact.schema import DeclaredConditions
 from cua.artifact.store import next_version, save_artifact
+from cua.escalation.confirm import ConfirmViaHandoff
+from cua.escalation.handoff import HeadedBrowserHandoff
 from cua.evidence.recorder import RunRecorder, ScreenshotMode
 from cua.policy.gate import PolicyGate
 from cua.policy.model import Policy
@@ -94,6 +96,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--provider", default="gemini,groq", help="comma-separated chain: gemini,groq | scripted")
     p.add_argument("--script", type=Path, default=None, help="tool-call script for --provider scripted")
     p.add_argument("--headed", action="store_true", help="show the browser window")
+    p.add_argument(
+        "--escalate",
+        action="store_true",
+        help="route risky actions to a human for confirmation in the live browser (implies --headed)",
+    )
+    p.add_argument("--escalation-timeout", type=float, default=600.0, help="seconds to wait for cua-resume")
     p.add_argument("--max-steps", type=int, default=25)
     p.add_argument("--timeout", type=float, default=300.0)
     p.add_argument("--evidence-dir", type=Path, default=Path("evidence/discovery"))
@@ -120,11 +128,23 @@ def main(argv: list[str] | None = None) -> int:
     recorder = RunRecorder(args.evidence_dir, "discovery", redactor=redactor, screenshot_mode=screenshot_mode)
     providers = build_providers([n.strip() for n in args.provider.split(",") if n.strip()], args.script)
 
-    surface = PlaywrightSurface(headless=not args.headed)
+    surface = PlaywrightSurface(headless=not (args.headed or args.escalate))
     surface.open()
     try:
+        confirm = None
+        if args.escalate:
+            handoff = HeadedBrowserHandoff(
+                surface=surface, control=surface.control, recorder=recorder, timeout_s=args.escalation_timeout
+            )
+            confirm = ConfirmViaHandoff(handoff, recorder, capability=args.name, run_label="discovery")
         agent = DiscoveryAgent(
-            surface=surface, llm=providers[0], gate=gate, secrets=secrets, recorder=recorder, redactor=redactor
+            surface=surface,
+            llm=providers[0],
+            gate=gate,
+            secrets=secrets,
+            recorder=recorder,
+            redactor=redactor,
+            confirm=confirm,
         )
         if len(providers) > 1:
             agent.llm = FallbackProvider(providers, on_fallback=agent.on_provider_fallback)
