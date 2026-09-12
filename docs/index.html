@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reprise: computer-use automation for legacy back-office apps</title>
+<meta name="description" content="An LLM performs a back-office task once. Reprise compiles that run into a typed capability artifact and replays it deterministically, without a model, with policy gating and a human handoff on the same browser session.">
+<meta property="og:title" content="Reprise">
+<meta property="og:description" content="A model performs the task once. Every run after is a reprise.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2314202e'/%3E%3Ctext x='32' y='45' font-family='Georgia,serif' font-size='40' font-weight='700' text-anchor='middle' fill='%23f6f4ef'%3ER%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="nav" aria-label="Sections">
+  <div class="wrap">
+    <a class="brand" href="#top">Reprise</a>
+    <div class="nav-links">
+      <a href="#discovery">Discovery</a>
+      <a href="#artifact">Artifact</a>
+      <a href="#replay">Replay</a>
+      <a href="#results">Results</a>
+      <a href="#safety">Safety</a>
+      <a href="#handoff">Handoff</a>
+      <a href="#evidence">Evidence</a>
+      <a href="#surfaces">Surfaces</a>
+      <a href="#run">Run it</a>
+    </div>
+    <a class="nav-gh" href="https://github.com/ishan0410/reprise">GitHub ↗</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <p class="eyebrow">Computer-use automation for legacy back-office applications</p>
+    <h1>Reprise</h1>
+    <p class="tagline">A model performs the task once. Every run after is a reprise.</p>
+    <p class="lede">
+      An LLM works out how to do a task in a legacy web app <b>once</b>. That run is compiled into a typed, versioned
+      <b>capability artifact</b>. After that, agents call the capability through a <b>replay engine that never consults a model</b>.
+      The engine sorts what the application says into business outcomes, recoverable conditions and hard failures, and
+      hands the <b>live browser to a human</b> when it cannot safely continue.
+    </p>
+    <noscript><p class="noscript">This page renders its evidence panels with JavaScript. The raw runs are in <a href="https://github.com/ishan0410/reprise/tree/main/evidence">evidence/</a>.</p></noscript>
+    <div class="cta">
+      <a class="btn primary" href="#discovery">Walk through a real run</a>
+      <a class="btn ghost" href="https://github.com/ishan0410/reprise">Source on GitHub</a>
+      <a class="btn ghost" href="https://github.com/ishan0410/reprise/blob/main/REPORT.md">Design report</a>
+    </div>
+
+    <div class="facts" aria-label="Recorded numbers">
+      <div class="fact"><div class="num" data-bind="disc-steps">–</div><div class="lbl">model steps to discover <code>lookup_member_balance</code></div><div class="src" data-bind="disc-src"></div></div>
+      <div class="fact"><div class="num" data-bind="art-steps">–</div><div class="lbl">steps in the compiled artifact: no refs, prompts or transcripts, only locators and checkpoints</div><div class="src">artifacts/lookup_member_balance/v1.0.0.json</div></div>
+      <div class="fact"><div class="num" data-bind="replay-ms">–</div><div class="lbl">replay of the same flow with a different member, 0 model calls</div><div class="src" data-bind="replay-src"></div></div>
+      <div class="fact"><div class="num">109</div><div class="lbl">tests passing, plus clean <code>mypy</code> and <code>ruff</code></div><div class="src">pytest run on this commit's code, 2026-09-12</div></div>
+    </div>
+
+    <div class="pipeline" aria-label="System overview">
+      <div class="pipe-row">
+        <div class="pipe-node llm"><div class="k">once · LLM</div><div class="t">Discovery</div><div class="d">observe → decide → act over the accessibility tree and a screenshot</div></div>
+        <div class="pipe-arrow" aria-hidden="true">→</div>
+        <div class="pipe-node"><div class="k">trace → builder</div><div class="t">Capability artifact</div><div class="d">typed inputs and outputs, locator chains, checkpoints, conditions, policy</div></div>
+        <div class="pipe-arrow" aria-hidden="true">→</div>
+        <div class="pipe-node nollm"><div class="k">every run · no LLM</div><div class="t">Deterministic replay</div><div class="d">checkpoints, declared conditions, bounded recovery</div></div>
+        <div class="pipe-arrow" aria-hidden="true">→</div>
+        <div class="pipe-node"><div class="k">result contract</div><div class="t">Three statuses</div>
+          <div class="pipe-outcomes"><span class="pill ok">success</span><span class="pill warn">business_outcome</span><span class="pill bad">failure</span></div>
+        </div>
+      </div>
+      <div class="pipe-band">
+        <div class="band"><b>PolicyGate</b> sits between every decision-maker and the Surface: allowlist, risk, secrets. It checks the model's proposals and the artifact's steps alike.</div>
+        <div class="band"><b>Escalation</b>: when replay gets stuck, automation pauses and a human takes over the <b>same browser window</b>, then hands control back.</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- 01 DISCOVERY -->
+<section class="block" id="discovery">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">01</div>
+      <div>
+        <h2>LLM discovery: observe → decide → act</h2>
+        <p>Each step, the model gets a stateless prompt: the goal, a compact action history, and the current page as an
+        accessibility snapshot where every node has an ephemeral <code>ref</code>. It answers with exactly one tool call.
+        That proposal goes through the PolicyGate before it touches the browser. Below is the real recorded run, step by step.</p>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="loop-legend">
+        <span class="pill neutral">Goal: <span data-bind="disc-goal"></span></span>
+      </div>
+      <div class="stepper" role="tablist" aria-label="Discovery steps" id="disc-steps"></div>
+      <div class="disc">
+        <div>
+          <div class="shot" id="disc-shot"><img alt="" id="disc-img"></div>
+          <div class="shot-cap"><span id="disc-shot-cap"></span><span>Click the image to expand</span></div>
+          <p class="small muted" style="margin-top:14px">Screenshots are raw images of the mock app's fictional data. Text evidence (logs, transcripts, traces, results)
+          goes through the redactor, which is why the balance on screen shows up as <code>[REDACTED:savings_balance]</code> in the snapshot and logs.</p>
+        </div>
+        <div class="card">
+          <div class="phase observe"><h4>1 · Observe</h4>
+            <dl class="kv"><dt>title</dt><dd id="disc-title"></dd><dt>url</dt><dd id="disc-url"></dd></dl>
+            <div class="code-cap" style="margin-top:8px"><b>Accessibility snapshot sent to the model</b><span id="disc-shot-sent"></span></div>
+            <pre class="code" id="disc-snapshot"></pre>
+          </div>
+          <div class="phase decide"><h4>2 · Decide <span class="pill neutral" id="disc-model"></span></h4>
+            <pre class="code" id="disc-call"></pre>
+            <div class="line small muted" id="disc-usage" style="margin-top:6px"></div>
+          </div>
+          <div class="phase gate"><h4>3 · PolicyGate</h4>
+            <div class="line" id="disc-decision"></div>
+          </div>
+          <div class="phase act"><h4>4 · Act</h4>
+            <div class="line" id="disc-result"></div>
+          </div>
+        </div>
+      </div>
+      <p class="src-link" style="margin-top:18px">Source: <a data-bind-href="disc-path"><span data-bind="disc-path"></span></a> (<code>trace.json</code>, <code>transcript.jsonl</code>, <code>screenshots/</code>)</p>
+
+      <div class="grid-2" style="margin-top:28px">
+        <div class="card">
+          <h3>What the model never sees</h3>
+          <p>Credentials exist only as <code>{{secret:TARGET_USERNAME}}</code> and <code>{{secret:TARGET_PASSWORD}}</code>. The model sends the reference, and the
+          executor fills in the real value when it types. The event log just says <code>typed a secret into textbox "Username"</code>.</p>
+        </div>
+        <div class="card">
+          <h3>A second, multi-field capability</h3>
+          <p id="disc2-summary"></p>
+          <p class="src-link"><a data-bind-href="disc2-path"><span data-bind="disc2-path"></span></a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 ARTIFACT -->
+<section class="block alt" id="artifact">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">02</div>
+      <div>
+        <h2>The run becomes a capability artifact</h2>
+        <p>The builder turns the discovery trace into a reviewable JSON contract. The model picked <em>which</em> element to use.
+        The builder, not the model, decides <em>how to find it again</em>. Refs, prompts, reasoning and token counts stay in the
+        evidence, and the artifact keeps only provenance pointers to them.</p>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="grid-2">
+        <div>
+          <ul class="points">
+            <li><b>Typed inputs and outputs.</b> <code>member_id</code> in, <code>savings_balance</code> out (marked <code>sensitive</code>), plus <code>found</code>, which only an outcome sets.</li>
+            <li><b>Ranked locator chains, not selectors.</b> role + accessible name → visible text → CSS path → bounding box, each less robust than the one before. Replay records which candidate matched and reports anything past the first as <em>drift</em>.</li>
+            <li><b>A value-independent extract.</b> "The 4th cell of the row whose label cell is exactly <code>Savings</code>". The balance itself changes between runs, so the locator never depends on it.</li>
+            <li><b>Phases and checkpoints.</b> <code>bootstrap</code> (sign in) and <code>main</code> each start with a navigate. Checkpoints come from what was actually observed: URL pattern plus title.</li>
+            <li><b>Declared conditions.</b> Outcomes, recoverables and failures come from a reviewed per-app file merged in by the builder, so adding a case means editing JSON, not code.</li>
+            <li><b>Least-privilege policy and review status.</b> Only the origins, paths, action types and secrets the recording used. <code>status</code> moves from <code>draft</code> to <code>approved</code> once a person reviews it.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="tabs" role="tablist" aria-label="Artifact excerpts" id="art-tabs"></div>
+          <div class="code-cap"><b id="art-cap"></b><span class="src-link"><a data-bind-href="art-path">artifacts/lookup_member_balance/v1.0.0.json</a></span></div>
+          <pre class="code" id="art-code"></pre>
+          <p class="small muted" id="art-note" style="margin-top:8px"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 REPLAY -->
+<section class="block" id="replay">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">03</div>
+      <div>
+        <h2>Deterministic replay, with no LLM</h2>
+        <p>Replay interprets the artifact. For each step it renders the <code>{{input}}</code>/<code>{{secret}}</code> templates, asks the PolicyGate, resolves
+        the target by polling the candidate chain until exactly one visible element matches, acts, re-checks the allowlist, evaluates
+        declared conditions, and waits for the checkpoint based on page state, never on fixed sleeps. The replay engine never builds a prompt or calls a model,
+        and importing it loads no provider SDK.</p>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="compare">
+        <div class="card"><div class="small muted">Discovery · <span data-bind="disc-model-name"></span></div><div class="big" data-bind="disc-wall"></div><p class="small" data-bind="disc-wall-note"></p></div>
+        <div class="card"><div class="small muted">Replay · no model</div><div class="big" data-bind="replay-ms-2"></div><p class="small" data-bind="replay-note"></p></div>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Replay runs" id="replay-tabs"></div>
+      <p class="small" id="replay-desc" style="margin:0 0 10px;color:var(--ink-2)"></p>
+      <div class="table-wrap"><table class="data" id="replay-table"></table></div>
+      <div id="replay-extra" style="margin-top:12px"></div>
+      <p class="src-link" style="margin-top:10px">Source: <a id="replay-link"></a></p>
+    </div>
+  </div>
+</section>
+
+<!-- 04 RESULTS -->
+<section class="block alt" id="results">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">04</div>
+      <div>
+        <h2>Success, business outcome, or failure</h2>
+        <p>"No such member" is a correct answer, not a crash. The result contract has three statuses a caller must handle
+        differently, and each one maps to its own CLI exit code. All three runs below used the same artifact and differ only in <code>member_id</code>.</p>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="grid-3" id="outcome-cards"></div>
+      <div class="order">
+        <span>When a step finishes, or when a target is missing or a checkpoint fails, conditions are checked in this order:</span>
+        <span class="pill neutral">recoverables</span>→<span class="pill warn">business outcomes</span>→<span class="pill bad">failures</span>
+      </div>
+      <p class="small muted" style="margin-top:8px">Recoverables go first because an interstitial can hide whatever is underneath it. Recovery is bounded: each pattern has <code>max_attempts</code>, a phase restarts at most three times, and a retryable app error gets one restart before it becomes a hard failure.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 05 SAFETY -->
+<section class="block" id="safety">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">05</div>
+      <div>
+        <h2>PolicyGate: safety that doesn't depend on the prompt</h2>
+        <p>Nothing reaches the browser without a policy decision. The prompt asks the model to behave, and the gate enforces it whether or not the model does.
+        Discovery treats the model as an untrusted source of proposals. Replay isn't exposed to prompt injection at all, because it has no model.</p>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="grid-2">
+        <div class="card">
+          <h3>Every action, in both loops</h3>
+          <ol class="gate-flow">
+            <li><b>Action type</b> is checked against the allowlist.</li>
+            <li><b>Destination origin and path</b> are matched against glob rules, and explicit denies win. The mock app's <code>/__admin/**</code> fault-injection fixture is always denied.</li>
+            <li><b>Secrets</b> must be on the allowed list and are never allowed in a URL.</li>
+            <li><b>Risk</b> is classified from control names (Confirm, Approve, Delete, Transfer…), URL patterns, and the step's recorded risk. A proposer can raise risk but never lower it. In <code>confirm</code> mode (the default), risky actions go to a human.</li>
+            <li><b>After the action</b>, the URL is checked again, because a click can navigate too.</li>
+          </ol>
+          <p class="small muted" style="margin-top:10px">An artifact's own policy is intersected with the environment's, so a recording can only narrow what an environment allows.</p>
+        </div>
+        <div>
+          <div class="tabs" role="tablist" aria-label="Safety evidence" id="safety-tabs"></div>
+          <div class="code-cap"><b id="safety-cap"></b><span class="src-link" id="safety-src"></span></div>
+          <pre class="code" id="safety-code"></pre>
+          <p class="small muted" id="safety-note" style="margin-top:8px"></p>
+        </div>
+      </div>
+      <div class="limits">
+        <h3>Stated limits (from REPORT.md)</h3>
+        <ul>
+          <li>The allowlist works on URLs and action types, not meaning: it can't tell a real "Search" button from one a malicious page relabelled.</li>
+          <li>Risk classification is heuristic and errs toward asking for confirmation. PII regexes catch structured identifiers, not free-text names.</li>
+          <li>Prompt injection from page content could steer the model during discovery. That's why the gate, not the prompt, is the boundary.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 HANDOFF -->
+<section class="block alt" id="handoff">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">06</div>
+      <div>
+        <h2>Human handoff on the same browser session</h2>
+        <p>An undeclared "password expires in 3 days" interstitial was injected. Replay couldn't classify it, so it wrote an intervention request,
+        paused, and ceded the session. From that moment the surface refuses automation actions (<code>ControlViolation</code>). A person dismissed
+        the dialog in the <b>same headed window</b> (same cookies, same page) and handed control back with <code>cua-resume</code>. The run finished successfully.</p>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="grid-2">
+        <div>
+          <div class="shot" id="esc-shot"><img alt="Security Notice interstitial: Your password expires in 3 days" id="esc-img"></div>
+          <div class="shot-cap"><span>screenshots/escalation-s4.png, captured when replay paused</span></div>
+          <div class="code-cap" style="margin-top:16px"><b>intervention.json</b><span>written by automation</span></div>
+          <pre class="code" id="esc-intervention"></pre>
+          <div class="code-cap" style="margin-top:12px"><b>resume.json</b><span>written by the operator via <code>cua-resume --resolution skip_step</code></span></div>
+          <pre class="code" id="esc-resume"></pre>
+        </div>
+        <div class="card">
+          <h3>Session-control ledger <span class="pill human" style="margin-left:6px">real operator</span></h3>
+          <p class="small muted">From <code>result.json → control_events</code>. The recorder logs which control the human used and what kind of action it was, never the values typed.</p>
+          <ol class="ledger" id="esc-ledger"></ol>
+          <p class="small" id="esc-final"></p>
+          <p class="src-link"><a data-bind-href="esc-path"><span data-bind="esc-path"></span></a></p>
+        </div>
+      </div>
+      <p class="small muted" style="margin-top:16px" id="esc-scripted"></p>
+    </div>
+  </div>
+</section>
+
+<!-- 07 EVIDENCE -->
+<section class="block" id="evidence">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">07</div>
+      <div>
+        <h2>Evidence and observability</h2>
+        <p>Every run gets its own directory. Everything written there goes through the redactor first. Replay takes screenshots
+        only on failure by default, so routine runs don't pile up images of regulated data. Every panel on this page is generated from these files.</p>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="grid-2">
+        <div class="card tree" id="ev-tree"></div>
+        <div>
+          <div class="tabs" role="tablist" aria-label="Log excerpts" id="log-tabs"></div>
+          <div class="code-cap"><b id="log-cap"></b><span class="src-link" id="log-src"></span></div>
+          <pre class="code" id="log-code"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 08 SURFACES -->
+<section class="block alt" id="surfaces">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">08</div>
+      <div>
+        <h2>Designed for heterogeneous surfaces</h2>
+        <p>The artifact never mentions Playwright or the DOM. <code>css</code> is just one candidate strategy a web adapter knows how to build.
+        Perception starts from the accessibility tree because roles and names survive restyling, and desktop accessibility APIs use the same vocabulary.
+        One adapter is built. The others are designs, labelled as such.</p>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="card" style="margin-bottom:16px">
+        <h3><code>Surface</code> contract <span class="small muted">src/cua/surface/base.py</span></h3>
+        <p>Discovery, replay, the PolicyGate and the escalation protocol only ever talk to this interface.</p>
+        <div class="contract">
+          <code>observe()</code><code>screenshot()</code><code>resolve(target)</code><code>handle_for_ref(ref)</code>
+          <code>navigate(url)</code><code>click(handle)</code><code>type_text(handle, text)</code><code>select_option(handle, label)</code>
+          <code>press(key)</code><code>read(handle)</code><code>settle()</code><code>describe(handle)</code>
+          <code>start_human_recording()</code><code>stop_human_recording()</code><code>set_banner(text)</code><code>url() · title()</code>
+        </div>
+      </div>
+      <div class="adapters">
+        <div class="adapter"><span class="pill built">built</span><h4>Web: PlaywrightSurface</h4><p>Chromium, accessibility tree first plus a screenshot. Handles table-based legacy layouts with <code>within</code> / <code>ancestor_role</code> locators. Every recorded run on this page used it.</p></div>
+        <div class="adapter designed"><span class="pill designed">designed, not built</span><h4>Legacy web: frame-aware</h4><p>Same class, with an optional <code>frame</code> scope on the target descriptor and more reliance on <code>text</code> / <code>within</code> for framesets.</p></div>
+        <div class="adapter designed"><span class="pill designed">designed, not built</span><h4>Desktop: UIA / macOS AX</h4><p><code>observe()</code> over the OS accessibility API (the same role/name vocabulary), with <code>bbox</code> candidates resolved against screen captures. The engine, contract, gate and escalation stay the same.</p></div>
+      </div>
+      <div class="grid-2" style="margin-top:16px">
+        <div class="card">
+          <h3>Multi-tenant reuse <span class="pill built" style="margin-left:4px">fields + flags built</span></h3>
+          <p>Tenants on the same vendor product share an artifact. <code>target.base_url</code> is bound per tenant (<code>--base-url</code>), <code>app_version</code> records which vendor version the recording used,
+          and <code>overrides[]</code> hold per-tenant, per-step changes applied with <code>--tenant X</code>.</p>
+          <p class="small muted">A tenant registry, per-tenant vaults and drift dashboards are deliberately not built.</p>
+        </div>
+        <div class="card">
+          <h3>Other seams</h3>
+          <p><code>LLMProvider</code> for models (Gemini first, Groq on 429/503, a scripted provider for offline runs). <code>EscalationHandler</code> for a remote operator console.
+          The artifact is the seam for tenants. Storage is files and execution is synchronous: the abstractions wouldn't change if infrastructure were added.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 09 RUN -->
+<section class="block" id="run">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">09</div>
+      <div>
+        <h2>Run it yourself</h2>
+        <p>Python 3.12+ and Chromium. You only need API keys for a live LLM discovery run. Everything else, including discovery through the scripted provider, runs offline.</p>
+      </div>
+    </div>
+    <div class="sec-body">
+      <div class="grid-2">
+        <div>
+          <div class="code-cap"><b>Setup and target app</b></div>
+<pre class="code">python3 -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install -e ".[dev]"
+playwright install chromium
+cp .env.example .env    # keys only needed for live discovery
+
+cua-target-app          # http://127.0.0.1:4000</pre>
+          <div class="code-cap" style="margin-top:14px"><b>Tests</b></div>
+<pre class="code">pytest                  # 109 passed
+pytest -m "not browser" # pure unit tests only
+mypy &amp;&amp; ruff check src tests</pre>
+        </div>
+        <div>
+          <div class="code-cap"><b>The demo path</b><span>exit codes: 0 success · 3 business_outcome · 1 failure</span></div>
+<pre class="code"><span class="dim"># 1. Discover once (live LLM), compile to an artifact</span>
+cua-discover --goal "Look up member 10001 and read their current savings balance" \
+             --name lookup_member_balance --input member_id=10001
+
+<span class="dim"># 2. Replay with a different input, no LLM</span>
+cua-replay --artifact artifacts/lookup_member_balance/v1.0.0.json --input member_id=10003
+
+<span class="dim"># 3. Business outcome (exit 3) and hard failure (exit 1)</span>
+cua-replay --artifact artifacts/lookup_member_balance/v1.0.0.json --input member_id=99999
+cua-replay --artifact artifacts/lookup_member_balance/v1.0.0.json --input member_id=40403
+
+<span class="dim"># 4. Human handoff on the same window</span>
+python demo/escalation_demo.py --artifact artifacts/lookup_member_balance/v1.0.0.json
+
+<span class="dim"># 5. Agent-facing catalog</span>
+cua-catalog approve lookup_member_balance --by &lt;you&gt;
+cua-catalog invoke  lookup_member_balance --arg member_id=10001
+
+<span class="dim"># Offline: discovery with the scripted provider</span>
+cua-discover ... --provider scripted --script demo/scripts/lookup_member_balance.json</pre>
+        </div>
+      </div>
+      <div class="grid-3" style="margin-top:20px">
+        <div class="card"><h3>What is mocked</h3><p>The target is a local mock "Member Services Console" for a credit union. Its <code>/__admin</code> fault-injection endpoints are a test fixture that the allowlist denies.</p></div>
+        <div class="card"><h3>Operator console</h3><p>A headed browser plus <code>cua-resume</code>. Control transfer, locking, action recording and resume are real. There is no remote co-browsing.</p></div>
+        <div class="card"><h3>What's next</h3><p>A second surface adapter, a tenant registry and drift dashboard, a remote operator console, and a bounded model-assisted re-locate on <code>TARGET_NOT_FOUND</code>. See REPORT.md → Cuts.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Reprise, by <a href="https://github.com/ishan0410">ishan0410</a>. Package and CLI prefix: <code>cua</code>.</span>
+    <span>Every run shown here is generated from committed evidence by <a href="https://github.com/ishan0410/reprise/blob/main/docs/build_showcase.py">docs/build_showcase.py</a>.</span>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

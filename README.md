@@ -6,6 +6,8 @@ An LLM figures out how to accomplish a task in a legacy back-office web app **on
 
 **Why the name.** A reprise is a passage performed again exactly as written. In French the same word means a resumption, and taking back control. All three happen here: the model's first run is compiled into an artifact, the replay engine reprises it without a model, and when it cannot safely continue a human takes the session, hands it back, and the run resumes.
 
+**Showcase:** [ishan0410.github.io/reprise](https://ishan0410.github.io/reprise/) walks through the recorded runs (source in [docs/](docs/)).
+
 Built for the interface.ai take-home. The design write-up is in [REPORT.md](REPORT.md); recorded runs are in [evidence/](evidence/). The Python package and CLI prefix are `cua` (computer-use automation).
 
 ```
