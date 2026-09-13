@@ -16,6 +16,7 @@
   <div class="wrap">
     <a class="brand" href="#top">Reprise</a>
     <div class="nav-links">
+      <a href="#glance">At a glance</a>
       <a href="#discovery">Discovery</a>
       <a href="#artifact">Artifact</a>
       <a href="#replay">Replay</a>
@@ -32,48 +33,126 @@
 
 <header class="hero" id="top">
   <div class="wrap">
-    <p class="eyebrow">Computer-use automation for legacy back-office applications</p>
-    <h1>Reprise</h1>
-    <p class="tagline">A model performs the task once. Every run after is a reprise.</p>
-    <p class="lede">
-      An LLM works out how to do a task in a legacy web app <b>once</b>. That run is compiled into a typed, versioned
-      <b>capability artifact</b>. After that, agents call the capability through a <b>replay engine that never consults a model</b>.
-      The engine sorts what the application says into business outcomes, recoverable conditions and hard failures, and
-      hands the <b>live browser to a human</b> when it cannot safely continue.
-    </p>
+    <p class="eyebrow">Reprise · computer-use automation for legacy back-office apps</p>
+    <h1 class="headline">An LLM figures out the task <em>once</em>.<br>Every run after that needs no model.</h1>
+    <p class="lede">Reprise records one AI-driven run through a legacy web app, compiles it into a typed capability, and replays it deterministically.
+    Policy decides what may happen, and when replay gets stuck a person takes over the same browser.</p>
     <noscript><p class="noscript">This page renders its evidence panels with JavaScript. The raw runs are in <a href="https://github.com/ishan0410/reprise/tree/main/evidence">evidence/</a>.</p></noscript>
+
+    <figure class="race" id="race" aria-labelledby="race-title">
+      <div class="race-head">
+        <div>
+          <div class="race-title" id="race-title">Same task, run twice</div>
+          <div class="race-sub">"Look up member 10001 and read their savings balance". Real timestamps from two recorded runs, shown at <span data-bind="race-speed"></span>× speed.</div>
+        </div>
+        <button class="btn ghost race-play" type="button" id="race-play" aria-label="Play the race again">↻ Replay</button>
+      </div>
+      <div class="race-body">
+        <div class="race-stage">
+          <div class="browser">
+            <div class="browser-bar"><span></span><span></span><span></span><code id="race-url">localhost:4000/login</code></div>
+            <div class="viewport"><img id="race-img" alt="The mock credit-union app during the discovery run"></div>
+          </div>
+          <div class="race-action" id="race-action" aria-live="polite">&nbsp;</div>
+        </div>
+        <div class="race-lanes">
+          <div class="lane llm">
+            <div class="lane-top">
+              <span class="lane-name"><i class="swatch" aria-hidden="true"></i>With the LLM <span class="muted">· discovery · <span data-bind="race-model"></span></span></span>
+              <span class="lane-clock" id="clock-disc">0.0 s</span>
+            </div>
+            <div class="track" id="track-disc"><div class="fill"></div></div>
+            <div class="lane-stat" id="stat-disc">&nbsp;</div>
+          </div>
+          <div class="lane replay">
+            <div class="lane-top">
+              <span class="lane-name"><i class="swatch" aria-hidden="true"></i>Without a model <span class="muted">· deterministic replay</span></span>
+              <span class="lane-clock" id="clock-replay">0.0 s</span>
+            </div>
+            <div class="track" id="track-replay"><div class="fill"></div></div>
+            <div class="lane-stat" id="stat-replay">&nbsp;</div>
+          </div>
+          <div class="axis" id="race-axis" aria-hidden="true"></div>
+          <p class="race-callout" id="race-callout">&nbsp;</p>
+        </div>
+      </div>
+      <figcaption class="race-note">Discovery time includes model calls and browser actions (<code>run.jsonl</code>, discovery.start → discovery.end). Replay time is <code>duration_ms</code> from <code>result.json</code>, for member 10003. Each tick is a recorded step; hover or focus one for details. One recorded run each, not a benchmark. Screenshots are raw images of the mock app's fictional data; text evidence is redacted.</figcaption>
+    </figure>
+
     <div class="cta">
-      <a class="btn primary" href="#discovery">Walk through a real run</a>
+      <a class="btn primary" href="#glance">See what it handles ↓</a>
       <a class="btn ghost" href="https://github.com/ishan0410/reprise">Source on GitHub</a>
       <a class="btn ghost" href="https://github.com/ishan0410/reprise/blob/main/REPORT.md">Design report</a>
     </div>
+    <p class="trust">109 tests passing · mypy and ruff clean · every number on this page is read from committed runs</p>
+  </div>
+</header>
 
-    <div class="facts" aria-label="Recorded numbers">
-      <div class="fact"><div class="num" data-bind="disc-steps">–</div><div class="lbl">model steps to discover <code>lookup_member_balance</code></div><div class="src" data-bind="disc-src"></div></div>
-      <div class="fact"><div class="num" data-bind="art-steps">–</div><div class="lbl">steps in the compiled artifact: no refs, prompts or transcripts, only locators and checkpoints</div><div class="src">artifacts/lookup_member_balance/v1.0.0.json</div></div>
-      <div class="fact"><div class="num" data-bind="replay-ms">–</div><div class="lbl">replay of the same flow with a different member, 0 model calls</div><div class="src" data-bind="replay-src"></div></div>
-      <div class="fact"><div class="num">109</div><div class="lbl">tests passing, plus clean <code>mypy</code> and <code>ruff</code></div><div class="src">pytest run on this commit's code, 2026-09-12</div></div>
+<!-- AT A GLANCE -->
+<section class="glance" id="glance">
+  <div class="wrap">
+    <div class="glance-grid">
+      <article class="gcard">
+        <div class="gcard-k">Result contract</div>
+        <h2>Knows "no" from "broken"</h2>
+        <div class="verdicts">
+          <div class="verdict ok"><span class="thumb"><img id="g-success" alt="Member Detail page" loading="lazy"></span><div><span class="pill ok">success</span><b>Balance read</b><span class="exitc">exit 0</span></div></div>
+          <div class="verdict warn"><span class="thumb"><img id="g-outcome" alt="No member found page" loading="lazy"></span><div><span class="pill warn">business_outcome</span><b>MEMBER_NOT_FOUND</b><span class="exitc">exit 3 · a real answer</span></div></div>
+          <div class="verdict bad"><span class="thumb"><img id="g-failure" alt="Access Denied page" loading="lazy"></span><div><span class="pill bad">failure</span><b>PERMISSION_DENIED</b><span class="exitc">exit 1 · don't retry</span></div></div>
+        </div>
+        <a class="gcard-more" href="#results">Same artifact, three member IDs →</a>
+      </article>
+
+      <article class="gcard">
+        <div class="gcard-k">Human handoff</div>
+        <h2>Stuck? A person takes the same browser</h2>
+        <div class="shot mini"><img id="g-escalation" alt="Unexpected Security Notice: your password expires in 3 days" loading="lazy"></div>
+        <ol class="mini-flow">
+          <li><span class="pill neutral">automation</span> hits an undeclared dialog → <b>pauses</b></li>
+          <li><span class="pill human">human</span> clicks "Remind Me Later" <span class="muted" id="g-held"></span></li>
+          <li><span class="pill neutral">automation</span> <b>resumes</b> → <span class="pill ok">success</span></li>
+        </ol>
+        <a class="gcard-more" href="#handoff">The control ledger →</a>
+      </article>
+
+      <article class="gcard">
+        <div class="gcard-k">PolicyGate</div>
+        <h2>Policy decides, not the prompt</h2>
+        <ul class="proofs">
+          <li><span class="proof-l">Password</span><code>{{secret:TARGET_PASSWORD}}</code><span class="proof-n">all the model ever sees</span></li>
+          <li><span class="proof-l">Balance</span><code>[REDACTED:savings_balance]</code><span class="proof-n">in every log and result</span></li>
+          <li><span class="proof-l">/__admin/**</span><code>denied</code><span class="proof-n">explicit denies win</span></li>
+          <li><span class="proof-l">"Confirm &amp; Open Account"</span><code>risky → human</code><span class="proof-n">never unattended</span></li>
+        </ul>
+        <a class="gcard-more" href="#safety">How the gate works →</a>
+      </article>
     </div>
 
-    <div class="pipeline" aria-label="System overview">
-      <div class="pipe-row">
-        <div class="pipe-node llm"><div class="k">once · LLM</div><div class="t">Discovery</div><div class="d">observe → decide → act over the accessibility tree and a screenshot</div></div>
-        <div class="pipe-arrow" aria-hidden="true">→</div>
-        <div class="pipe-node"><div class="k">trace → builder</div><div class="t">Capability artifact</div><div class="d">typed inputs and outputs, locator chains, checkpoints, conditions, policy</div></div>
-        <div class="pipe-arrow" aria-hidden="true">→</div>
-        <div class="pipe-node nollm"><div class="k">every run · no LLM</div><div class="t">Deterministic replay</div><div class="d">checkpoints, declared conditions, bounded recovery</div></div>
-        <div class="pipe-arrow" aria-hidden="true">→</div>
-        <div class="pipe-node"><div class="k">result contract</div><div class="t">Three statuses</div>
-          <div class="pipe-outcomes"><span class="pill ok">success</span><span class="pill warn">business_outcome</span><span class="pill bad">failure</span></div>
-        </div>
+    <div class="overview">
+      <div class="overview-head">
+        <h2>How it fits together</h2>
+        <p>Deep dive below: every panel is a real recorded file.</p>
       </div>
-      <div class="pipe-band">
-        <div class="band"><b>PolicyGate</b> sits between every decision-maker and the Surface: allowlist, risk, secrets. It checks the model's proposals and the artifact's steps alike.</div>
-        <div class="band"><b>Escalation</b>: when replay gets stuck, automation pauses and a human takes over the <b>same browser window</b>, then hands control back.</div>
+      <div class="pipeline" aria-label="System overview">
+        <div class="pipe-row">
+          <a class="pipe-node llm" href="#discovery"><div class="k">01 · once · LLM</div><div class="t">Discovery</div><div class="d">observe → decide → act</div></a>
+          <div class="pipe-arrow" aria-hidden="true">→</div>
+          <a class="pipe-node" href="#artifact"><div class="k">02 · trace → builder</div><div class="t">Capability artifact</div><div class="d">locators, checkpoints, conditions, policy</div></a>
+          <div class="pipe-arrow" aria-hidden="true">→</div>
+          <a class="pipe-node nollm" href="#replay"><div class="k">03 · every run · no LLM</div><div class="t">Deterministic replay</div><div class="d">bounded recovery, drift report</div></a>
+          <div class="pipe-arrow" aria-hidden="true">→</div>
+          <a class="pipe-node" href="#results"><div class="k">04 · result contract</div><div class="t">Three statuses</div>
+            <div class="pipe-outcomes"><span class="pill ok">success</span><span class="pill warn">business_outcome</span><span class="pill bad">failure</span></div>
+          </a>
+        </div>
+        <div class="pipe-band">
+          <a class="band" href="#safety"><b>05 · PolicyGate</b> checks every action from the model and the artifact alike: allowlist, risk, secrets.</a>
+          <a class="band" href="#handoff"><b>06 · Escalation</b>: automation pauses and a human takes over the <b>same browser window</b>.</a>
+        </div>
       </div>
     </div>
   </div>
-</header>
+</section>
 
 <!-- 01 DISCOVERY -->
 <section class="block" id="discovery">

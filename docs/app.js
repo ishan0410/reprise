@@ -62,17 +62,120 @@
     shot.querySelector("img").addEventListener("click", () => shot.classList.toggle("full"));
   }
 
-  /* ---------------- hero facts ---------------- */
   const disc = D.discovery;
   const art = D.artifact.json;
   const rs = D.replays.success.result;
+  const E = D.escalation;
   const discWall = ms(disc.finished_at) - ms(disc.started_at);
-  bind("disc-steps", disc.steps.length);
-  bind("disc-src", disc.path);
-  bind("art-steps", art.steps.length);
-  bind("replay-ms", fmtMs(rs.duration_ms));
-  bind("replay-src", D.replays.success.path);
   bind("disc-goal", disc.goal);
+
+  /* ---------------- hero race: same task, with and without the model ---------------- */
+  (function race() {
+    const SPEED = 4;
+    const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const dLog = disc.run_log;
+    const d0 = ms(dLog.find((e) => e.kind === "discovery.start").ts);
+    const total = ms(dLog.find((e) => e.kind === "discovery.end").ts) - d0;
+    const dSteps = dLog.filter((e) => e.kind === "step").map((e) => ({ at: ms(e.ts) - d0, tool: e.tool, detail: e.detail }));
+    const rLog = D.replays.success.run_log;
+    const r0 = ms(rLog.find((e) => e.kind === "replay.start").ts);
+    const rSteps = rLog.filter((e) => e.kind === "step").map((e) => ({ at: ms(e.ts) - r0, step: e.step, action: e.action, dur: e.duration_ms }));
+    const rEnd = rs.duration_ms;
+    const tokens = disc.steps.reduce((n, s) => n + s.usage.input_tokens + s.usage.output_tokens, 0);
+    const pct = (v) => `${Math.min(100, (v / total) * 100)}%`;
+    const secs = (v, digits) => `${(v / 1000).toFixed(digits)} s`;
+
+    bind("race-speed", SPEED);
+    bind("race-model", disc.steps[0].model);
+
+    const mkTicks = (trackSel, items, tip) =>
+      items.map((it) => {
+        const t = el("span", { class: "tick", tabindex: "0", "data-tip": tip(it) });
+        t.style.left = pct(it.at);
+        if (it.at / total > 0.6) t.classList.add("tip-end");
+        else if (it.at / total < 0.3) t.classList.add("tip-start");
+        $(trackSel).append(t);
+        return t;
+      });
+    const dTicks = mkTicks("#track-disc", dSteps, (s) => `${secs(s.at, 1)} · ${s.tool}: ${s.detail.length > 48 ? s.detail.slice(0, 48) + "…" : s.detail}`);
+    const rTicks = mkTicks("#track-replay", rSteps, (s) => `${s.at} ms · ${s.step} ${s.action} (${s.dur} ms)`);
+    const axis = $("#race-axis");
+    [0, 5000, 10000, 15000].filter((v) => v < total - 1500).concat([total]).forEach((v) => {
+      const lab = el("span", { text: v === total ? secs(v, 1) : `${v / 1000} s` });
+      lab.style.left = pct(v);
+      axis.append(lab);
+    });
+
+    disc.steps.forEach((s) => { const i = new Image(); i.src = s.screenshot; });
+    const img = $("#race-img");
+    let shown = -1;
+
+    function render(sim) {
+      sim = Math.min(sim, total);
+      const done = dSteps.filter((s) => s.at <= sim).length;
+      $("#track-disc .fill").style.width = pct(sim);
+      $("#clock-disc").textContent = secs(sim, 1);
+      dTicks.forEach((t, i) => t.classList.toggle("on", dSteps[i].at <= sim));
+
+      const rSim = Math.min(sim, rEnd);
+      $("#track-replay .fill").style.width = pct(rSim);
+      $("#clock-replay").textContent = secs(rSim, 2);
+      rTicks.forEach((t, i) => t.classList.toggle("on", rSteps[i].at <= sim));
+
+      const idx = Math.min(done, disc.steps.length - 1);
+      if (idx !== shown) {
+        shown = idx;
+        img.src = disc.steps[idx].screenshot;
+        $("#race-url").textContent = disc.steps[idx].url.replace(/^https?:\/\//, "");
+      }
+      $("#race-action").textContent = done ? `✓ ${dSteps[done - 1].detail}` : "model is reading the login page…";
+
+      $("#stat-replay").innerHTML = sim >= rEnd ? `<b>done</b> · ${rSteps.length} browser steps · 0 model calls · 0 tokens` : "&nbsp;";
+      $("#stat-disc").innerHTML = sim >= total ? `<b>done</b> · ${disc.steps.length} model calls · ${tokens.toLocaleString()} tokens` : `${done} of ${dSteps.length} model steps`;
+      $("#race-callout").innerHTML =
+        sim >= total ? `Same flow: <b>${secs(rEnd, 2)}</b> without a model, ${secs(total, 1)} with one.`
+        : sim >= rEnd ? `Replay has already finished. Discovery is on step ${Math.min(done + 1, dSteps.length)} of ${dSteps.length}.`
+        : "&nbsp;";
+    }
+
+    let raf = 0;
+    function play() {
+      cancelAnimationFrame(raf);
+      if (reduced) return render(total);
+      const start = performance.now();
+      const frame = (now) => {
+        const sim = (now - start) * SPEED;
+        render(sim);
+        if (sim < total) raf = requestAnimationFrame(frame);
+      };
+      raf = requestAnimationFrame(frame);
+    }
+    $("#race-play").addEventListener("click", play);
+    render(0);
+    if (reduced || !("IntersectionObserver" in window)) {
+      play();
+    } else {
+      const io = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) { io.disconnect(); play(); }
+      }, { threshold: 0.35 });
+      io.observe($("#race"));
+    }
+  })();
+
+  /* ---------------- at a glance ---------------- */
+  const gSuccess = $("#g-success");
+  gSuccess.src = disc.steps[disc.steps.length - 1].screenshot;
+  gSuccess.title = "Member Detail page, captured during discovery (successful replays don't take screenshots)";
+  $("#g-outcome").src = D.replays.business_outcome.screenshots[0];
+  $("#g-failure").src = D.replays.failure.screenshots[0];
+  $("#g-escalation").src = E.screenshots[0];
+  {
+    const ev = E.result.control_events;
+    const ceded = ev.find((x) => x.event === "ceded");
+    const resumed = ev.find((x) => x.event === "resumed");
+    const held = Math.round((ms(resumed.at) - ms(ceded.at)) / 1000);
+    $("#g-held").textContent = `· held ${Math.floor(held / 60)}m ${held % 60}s`;
+  }
 
   /* ---------------- 01 discovery ---------------- */
   bind("disc-path", disc.path);
@@ -260,7 +363,6 @@
   });
 
   /* ---------------- 06 handoff ---------------- */
-  const E = D.escalation;
   bind("esc-path", E.path);
   bindHref("esc-path", GH_TREE + E.path);
   const escShot = E.screenshots[0];
