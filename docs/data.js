@@ -5,6 +5,9 @@ window.REPRISE = {
   "run_id": "discovery-20260911T023106Z-8ace",
   "path": "evidence/discovery/discovery-20260911T023106Z-8ace",
   "goal": "Look up member 10001 and read their current savings balance",
+  "inputs": {
+   "member_id": "10001"
+  },
   "status": "success",
   "summary": "Looked up member 10001 and extracted their current savings balance of [REDACTED:savings_balance].",
   "started_at": "2026-09-11T02:31:08.516508+00:00",
@@ -453,6 +456,12 @@ window.REPRISE = {
   "run_id": "discovery-20260911T033357Z-8e8e",
   "path": "evidence/discovery/discovery-20260911T033357Z-8e8e",
   "goal": "Open a new Checking sub-account nicknamed Bills with a 25.00 initial deposit for member 10002 and reach the review screen without confirming",
+  "inputs": {
+   "member_id": "10002",
+   "account_type": "Checking",
+   "nickname": "Bills",
+   "initial_deposit": "25.00"
+  },
   "status": "success",
   "summary": "Navigated to member 10002's sub-account creation form, filled out the required details (Checking account, nickname Bills, initial deposit 25.00), and successfully reached the review screen without confirming.",
   "started_at": "2026-09-11T03:33:59.821941+00:00",

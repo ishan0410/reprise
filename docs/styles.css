@@ -302,6 +302,17 @@ table.data .phase-tag { font-size: 0.7rem; color: var(--muted); font-family: var
 
 .compare { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-bottom: 24px; }
 .compare .card .big { font-family: var(--serif); font-size: 2.2rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.compare.flow { grid-template-columns: minmax(0, 1fr) auto minmax(0, 0.8fr) auto minmax(0, 1fr); gap: 10px; }
+.flow .card { border-top-width: 4px; }
+.flow-disc { border-top-color: var(--lane-disc); }
+.flow-replay { border-top-color: var(--lane-replay); }
+a.flow-art { text-decoration: none; color: inherit; align-self: center; background: var(--paper-2); }
+a.flow-art:hover { border-color: var(--accent); color: inherit; }
+.flow-k { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; }
+.flow-disc .flow-k { color: var(--lane-disc); }
+.flow-replay .flow-k { color: var(--lane-replay); }
+.flow-in { display: inline-block; margin: 6px 0 12px; font-size: 0.95rem; font-weight: 600; overflow-wrap: anywhere; }
+.flow-art .flow-in { font-size: 0.8rem; font-weight: 400; }
 
 /* ---------- outcomes ---------- */
 .outcome-card { border-top: 4px solid var(--rule); display: flex; flex-direction: column; gap: 10px; }
@@ -368,6 +379,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wr
     .pipe-row { grid-template-columns: minmax(0, 1fr); }
   .pipe-arrow { transform: rotate(90deg); justify-self: center; line-height: 1; }
   .pipe-band { grid-template-columns: 1fr; }
+  .compare.flow { grid-template-columns: minmax(0, 1fr); }
   .race-body { grid-template-columns: minmax(0, 1fr); }
   .glance-grid { grid-template-columns: minmax(0, 1fr); }
 }

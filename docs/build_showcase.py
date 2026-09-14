@@ -103,6 +103,7 @@ def discovery(run: str, planned: dict[Path, Path], *, copy_screenshots: bool = T
         "run_id": trace["run_id"],
         "path": f"evidence/{run}",
         "goal": trace["goal"],
+        "inputs": trace["inputs"],
         "status": trace["status"],
         "summary": trace["summary"],
         "started_at": trace["started_at"],

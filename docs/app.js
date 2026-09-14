@@ -267,6 +267,9 @@
   });
 
   /* ---------------- 03 replay ---------------- */
+  bind("disc-member", disc.inputs.member_id);
+  bind("flow-art-path", D.artifact.path);
+  bind("replay-member", rs.inputs.member_id);
   bind("disc-model-name", disc.steps[0].model);
   bind("disc-wall", fmtMs(discWall));
   bind("disc-wall-note", `${disc.steps.length} model calls, ${disc.total_input_tokens.toLocaleString()} input tokens, one step at a time (discovery.start → discovery.end).`);

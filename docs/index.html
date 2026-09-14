@@ -263,9 +263,12 @@
       </div>
     </div>
     <div class="sec-body">
-      <div class="compare">
-        <div class="card"><div class="small muted">Discovery · <span data-bind="disc-model-name"></span></div><div class="big" data-bind="disc-wall"></div><p class="small" data-bind="disc-wall-note"></p></div>
-        <div class="card"><div class="small muted">Replay · no model</div><div class="big" data-bind="replay-ms-2"></div><p class="small" data-bind="replay-note"></p></div>
+      <div class="compare flow" aria-label="The same capability, discovered once with an LLM and replayed with a different input">
+        <div class="card flow-disc"><div class="flow-k">Discovery — LLM</div><code class="flow-in">member_id = <span data-bind="disc-member"></span></code><div class="small muted">Discovery · <span data-bind="disc-model-name"></span></div><div class="big" data-bind="disc-wall"></div><p class="small" data-bind="disc-wall-note"></p></div>
+        <div class="pipe-arrow" aria-hidden="true">→</div>
+        <a class="card flow-art" href="#artifact"><div class="flow-k">Capability artifact</div><code class="flow-in" data-bind="flow-art-path"></code><p class="small">Built from the discovery trace. Replay interprets the artifact.</p></a>
+        <div class="pipe-arrow" aria-hidden="true">→</div>
+        <div class="card flow-replay"><div class="flow-k">Replay — 0 LLM calls</div><code class="flow-in">member_id = <span data-bind="replay-member"></span></code><div class="small muted">Replay · no model</div><div class="big" data-bind="replay-ms-2"></div><p class="small" data-bind="replay-note"></p></div>
       </div>
 
       <div class="tabs" role="tablist" aria-label="Replay runs" id="replay-tabs"></div>
